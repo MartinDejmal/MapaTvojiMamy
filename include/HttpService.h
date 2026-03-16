@@ -4,5 +4,5 @@
 
 class HttpService {
  public:
-  bool get(const char* url, String& payload);
+  bool get(const String& url, String& payload);
 };
