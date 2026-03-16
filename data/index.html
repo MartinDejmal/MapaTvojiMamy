@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MapaTvojiMamy Admin</title>
+  <link rel="stylesheet" href="/app.css" />
+</head>
+<body>
+  <main class="container">
+    <h1>MapaTvojiMamy - Admin</h1>
+
+    <section>
+      <h2>Status</h2>
+      <pre id="statusBox">Načítám...</pre>
+    </section>
+
+    <section>
+      <h2>Konfigurace</h2>
+      <form id="configForm">
+        <label>Wi-Fi SSID <input name="wifiSsid" /></label>
+        <label>Wi-Fi password <input name="wifiPassword" type="password" /></label>
+        <label>Hostname <input name="hostname" /></label>
+        <label>Data URL <input name="dataUrl" /></label>
+        <label>parserType
+          <select name="parserType">
+            <option>INDEXED_H1</option>
+            <option>INDEXED_VALUE_FIELD</option>
+            <option>NAMED_VALUE_FIELD</option>
+            <option>NAMED_COLOR_FIELD</option>
+          </select>
+        </label>
+        <label>locationField <input name="locationField" /></label>
+        <label>valueField <input name="valueField" /></label>
+        <label>colorField <input name="colorField" /></label>
+        <label>minValue <input name="minValue" type="number" step="any" /></label>
+        <label>maxValue <input name="maxValue" type="number" step="any" /></label>
+        <label>refreshIntervalMs <input name="refreshIntervalMs" type="number" /></label>
+        <label>brightness <input name="brightness" type="number" min="0" max="255" /></label>
+        <label>wheelMin <input name="wheelMin" type="number" /></label>
+        <label>wheelMax <input name="wheelMax" type="number" /></label>
+        <div class="buttons">
+          <button type="submit">Save</button>
+          <button type="button" id="testFetchBtn">Test fetch</button>
+          <button type="button" id="restartBtn">Restart</button>
+        </div>
+      </form>
+      <p id="formMessage"></p>
+    </section>
+
+    <section>
+      <h2>Test fetch výsledek</h2>
+      <pre id="testFetchBox">---</pre>
+    </section>
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>

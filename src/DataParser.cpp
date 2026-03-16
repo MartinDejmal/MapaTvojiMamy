@@ -12,20 +12,27 @@ bool DataParser::parse(
     const String& payload,
     const AppConfig& config,
     LedState* outStates,
-    size_t count) {
+    size_t count,
+    ParseStats* outStats) {
   clearStates(outStates, count);
+  resetStats(outStats);
 
-  // Pole až desítek objektů + několik textových klíčů; 8 KB drží rezervu pro více formátů.
   StaticJsonDocument<8192> doc;
   DeserializationError error = deserializeJson(doc, payload);
   if (error) {
     Serial.print("DataParser: JSON parse failed: ");
     Serial.println(error.c_str());
+    if (outStats != nullptr) {
+      outStats->error = String("JSON parse failed: ") + error.c_str();
+    }
     return false;
   }
 
   if (!doc.is<JsonArrayConst>()) {
     Serial.println("DataParser: root must be array");
+    if (outStats != nullptr) {
+      outStats->error = "Root JSON must be array";
+    }
     return false;
   }
 
@@ -36,36 +43,47 @@ bool DataParser::parse(
 
   switch (parserType) {
     case ParserType::INDEXED_H1:
-      return parseIndexedH1(array, outStates, count);
+      return parseIndexedH1(array, outStates, count, outStats);
     case ParserType::INDEXED_VALUE_FIELD:
-      return parseIndexedValueField(array, config.mapProfile.valueField, outStates, count);
+      return parseIndexedValueField(array, config.mapProfile.valueField, outStates, count, outStats);
     case ParserType::NAMED_VALUE_FIELD:
       return parseNamedValueField(
           array,
           config.mapProfile.locationField,
           config.mapProfile.valueField,
           outStates,
-          count);
+          count,
+          outStats);
     case ParserType::NAMED_COLOR_FIELD:
       return parseNamedColorField(
           array,
           config.mapProfile.locationField,
           config.mapProfile.colorField,
           outStates,
-          count);
+          count,
+          outStats);
     default:
       Serial.println("DataParser: unsupported parser type");
+      if (outStats != nullptr) {
+        outStats->error = "Unsupported parser type";
+      }
       return false;
   }
 }
 
-bool DataParser::parseIndexedH1(JsonArrayConst array, LedState* outStates, size_t count) const {
-  size_t parsedCount = 0;
+bool DataParser::parseIndexedH1(
+    JsonArrayConst array,
+    LedState* outStates,
+    size_t count,
+    ParseStats* outStats) const {
+  int parsedCount = 0;
+  int ignoredCount = 0;
   const size_t maxCount = array.size() < count ? array.size() : count;
 
   for (size_t i = 0; i < maxCount; ++i) {
     JsonVariantConst value = array[i]["h1"];
     if (!value.is<float>() && !value.is<int>()) {
+      ++ignoredCount;
       continue;
     }
 
@@ -75,8 +93,17 @@ bool DataParser::parseIndexedH1(JsonArrayConst array, LedState* outStates, size_
     ++parsedCount;
   }
 
+  if (outStats != nullptr) {
+    outStats->recognizedCount = parsedCount;
+    outStats->unknownCount = ignoredCount;
+    outStats->activeCount = parsedCount;
+  }
+
   if (parsedCount == 0) {
     Serial.println("DataParser: INDEXED_H1 parsed no values");
+    if (outStats != nullptr) {
+      outStats->error = "INDEXED_H1 parsed no values";
+    }
     return false;
   }
 
@@ -87,13 +114,16 @@ bool DataParser::parseIndexedValueField(
     JsonArrayConst array,
     const String& valueField,
     LedState* outStates,
-    size_t count) const {
-  size_t parsedCount = 0;
+    size_t count,
+    ParseStats* outStats) const {
+  int parsedCount = 0;
+  int ignoredCount = 0;
   const size_t maxCount = array.size() < count ? array.size() : count;
 
   for (size_t i = 0; i < maxCount; ++i) {
     JsonVariantConst value = array[i][valueField.c_str()];
     if (!value.is<float>() && !value.is<int>()) {
+      ++ignoredCount;
       continue;
     }
 
@@ -103,8 +133,17 @@ bool DataParser::parseIndexedValueField(
     ++parsedCount;
   }
 
+  if (outStats != nullptr) {
+    outStats->recognizedCount = parsedCount;
+    outStats->unknownCount = ignoredCount;
+    outStats->activeCount = parsedCount;
+  }
+
   if (parsedCount == 0) {
     Serial.println("DataParser: INDEXED_VALUE_FIELD parsed no values");
+    if (outStats != nullptr) {
+      outStats->error = "INDEXED_VALUE_FIELD parsed no values";
+    }
     return false;
   }
 
@@ -116,25 +155,27 @@ bool DataParser::parseNamedValueField(
     const String& locationField,
     const String& valueField,
     LedState* outStates,
-    size_t count) {
-  size_t parsedCount = 0;
+    size_t count,
+    ParseStats* outStats) {
+  int parsedCount = 0;
+  int unknownCount = 0;
 
   for (JsonVariantConst item : array) {
     const String location = String((const char*)(item[locationField.c_str()] | ""));
     if (location.isEmpty()) {
+      ++unknownCount;
       continue;
     }
 
     const int ledIndex = locationRegistry_.findLedIndexByKey(location);
     if (ledIndex < 0 || static_cast<size_t>(ledIndex) >= count) {
-      Serial.print("DataParser: unknown location '");
-      Serial.print(location);
-      Serial.println("'");
+      ++unknownCount;
       continue;
     }
 
     JsonVariantConst value = item[valueField.c_str()];
     if (!value.is<float>() && !value.is<int>()) {
+      ++unknownCount;
       continue;
     }
 
@@ -144,8 +185,17 @@ bool DataParser::parseNamedValueField(
     ++parsedCount;
   }
 
+  if (outStats != nullptr) {
+    outStats->recognizedCount = parsedCount;
+    outStats->unknownCount = unknownCount;
+    outStats->activeCount = parsedCount;
+  }
+
   if (parsedCount == 0) {
     Serial.println("DataParser: NAMED_VALUE_FIELD parsed no values");
+    if (outStats != nullptr) {
+      outStats->error = "NAMED_VALUE_FIELD parsed no values";
+    }
     return false;
   }
 
@@ -157,22 +207,23 @@ bool DataParser::parseNamedColorField(
     const String& locationField,
     const String& colorField,
     LedState* outStates,
-    size_t count) {
-  size_t parsedCount = 0;
+    size_t count,
+    ParseStats* outStats) {
+  int parsedCount = 0;
+  int unknownCount = 0;
 
   for (JsonVariantConst item : array) {
     const String location = String((const char*)(item[locationField.c_str()] | ""));
     const String colorHex = String((const char*)(item[colorField.c_str()] | ""));
 
     if (location.isEmpty() || colorHex.isEmpty()) {
+      ++unknownCount;
       continue;
     }
 
     const int ledIndex = locationRegistry_.findLedIndexByKey(location);
     if (ledIndex < 0 || static_cast<size_t>(ledIndex) >= count) {
-      Serial.print("DataParser: unknown location '");
-      Serial.print(location);
-      Serial.println("'");
+      ++unknownCount;
       continue;
     }
 
@@ -180,9 +231,7 @@ bool DataParser::parseNamedColorField(
     uint8_t g = 0;
     uint8_t b = 0;
     if (!parseHexColor(colorHex, r, g, b)) {
-      Serial.print("DataParser: invalid color '");
-      Serial.print(colorHex);
-      Serial.println("'");
+      ++unknownCount;
       continue;
     }
 
@@ -194,8 +243,17 @@ bool DataParser::parseNamedColorField(
     ++parsedCount;
   }
 
+  if (outStats != nullptr) {
+    outStats->recognizedCount = parsedCount;
+    outStats->unknownCount = unknownCount;
+    outStats->activeCount = parsedCount;
+  }
+
   if (parsedCount == 0) {
     Serial.println("DataParser: NAMED_COLOR_FIELD parsed no values");
+    if (outStats != nullptr) {
+      outStats->error = "NAMED_COLOR_FIELD parsed no values";
+    }
     return false;
   }
 
@@ -226,4 +284,15 @@ void DataParser::clearStates(LedState* outStates, size_t count) const {
     outStates[i].g = 0;
     outStates[i].b = 0;
   }
+}
+
+void DataParser::resetStats(ParseStats* outStats) const {
+  if (outStats == nullptr) {
+    return;
+  }
+
+  outStats->recognizedCount = 0;
+  outStats->unknownCount = 0;
+  outStats->activeCount = 0;
+  outStats->error = "";
 }
