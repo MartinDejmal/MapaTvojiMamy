@@ -3,3 +3,6 @@
 
 # VSCode PlatformIO extension
 .vscode/
+
+# Local configuration file config.json
+/data/config.json

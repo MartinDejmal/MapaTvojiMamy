@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "wifi": {
+    "ssid": "YOUR_WIFI_SSID",
+    "password": "YOUR_WIFI_PASSWORD",
+    "hostname": "cr-mapa"
+  },
+  "mapProfile": {
+    "url": "http://tmep.cz/vystup-json.php?okresy_cr=1",
+    "parserType": "INDEXED_H1",
+    "locationField": "name",
+    "valueField": "h1",
+    "colorField": "color",
+    "minValue": -15.0,
+    "maxValue": 40.0,
+    "refreshIntervalMs": 1000
+  },
+  "render": {
+    "brightness": 10,
+    "wheelMin": 170,
+    "wheelMax": 0
+  }
+}
