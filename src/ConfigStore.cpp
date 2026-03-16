@@ -85,12 +85,12 @@ bool ConfigStore::validateAndNormalize(AppConfig& config, String& reason) {
   }
 
   if (config.mapProfile.url.isEmpty()) {
-    reason = "dataSource.url empty";
+    reason = "mapProfile.url empty";
     return false;
   }
 
-  if (config.mapProfile.refreshIntervalMs < 100) {
-    reason = "refreshIntervalMs too low";
+  if (config.mapProfile.refreshIntervalMs == 0) {
+    reason = "refreshIntervalMs must be > 0";
     return false;
   }
 
@@ -100,25 +100,40 @@ bool ConfigStore::validateAndNormalize(AppConfig& config, String& reason) {
   }
 
   if (config.render.brightness > 255) {
-    config.render.brightness = defaults.render.brightness;
+    reason = "brightness must be in 0-255";
+    return false;
   }
 
-  ParserType parserType = AppDefaults::parserTypeFromString(
-      config.mapProfile.parserType,
-      ParserType::INDEXED_H1);
-  config.mapProfile.parserType = AppDefaults::parserTypeToString(parserType);
+  const String parserTypeRaw = config.mapProfile.parserType;
+  ParserType parserType = AppDefaults::parserTypeFromString(parserTypeRaw, ParserType::INDEXED_H1);
+  const String parserTypeNormalized = String(AppDefaults::parserTypeToString(parserType));
+  if (parserTypeRaw.isEmpty() || !parserTypeRaw.equalsIgnoreCase(parserTypeNormalized)) {
+    reason = "unknown parserType";
+    return false;
+  }
+  config.mapProfile.parserType = parserTypeNormalized;
 
-    if (config.mapProfile.locationField.isEmpty()) {
-      config.mapProfile.locationField = defaults.mapProfile.locationField;
-  }
-    if (config.mapProfile.valueField.isEmpty()) {
-      config.mapProfile.valueField = defaults.mapProfile.valueField;
-  }
-    if (config.mapProfile.colorField.isEmpty()) {
-      config.mapProfile.colorField = defaults.mapProfile.colorField;
-  }
   if (config.wifi.hostname.isEmpty()) {
     config.wifi.hostname = defaults.wifi.hostname;
+  }
+
+  if (parserType == ParserType::NAMED_VALUE_FIELD || parserType == ParserType::NAMED_COLOR_FIELD) {
+    if (config.mapProfile.locationField.isEmpty()) {
+      reason = "locationField is required for named parser";
+      return false;
+    }
+  }
+
+  if (parserType == ParserType::INDEXED_VALUE_FIELD || parserType == ParserType::NAMED_VALUE_FIELD) {
+    if (config.mapProfile.valueField.isEmpty()) {
+      reason = "valueField is required for selected parserType";
+      return false;
+    }
+  }
+
+  if (parserType == ParserType::NAMED_COLOR_FIELD && config.mapProfile.colorField.isEmpty()) {
+    reason = "colorField is required for NAMED_COLOR_FIELD";
+    return false;
   }
 
   reason = "ok";
@@ -126,7 +141,6 @@ bool ConfigStore::validateAndNormalize(AppConfig& config, String& reason) {
 }
 
 bool ConfigStore::fromJson(const String& json, AppConfig& outConfig, String& reason) {
-  // Config obsahuje zanořené objekty + několik String polí. 4 KB je bezpečný strop.
   StaticJsonDocument<4096> doc;
   DeserializationError error = deserializeJson(doc, json);
   if (error) {
