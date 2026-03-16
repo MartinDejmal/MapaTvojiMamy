@@ -3,11 +3,15 @@
 #include <HTTPClient.h>
 #include <WiFi.h>
 
-bool HttpService::get(const char* url, String& payload) {
+bool HttpService::get(const String& url, String& payload) {
   WiFiClient client;
   HTTPClient http;
 
-  http.begin(client, url);
+  if (!http.begin(client, url)) {
+    Serial.println("HTTP GET failed: begin() returned false");
+    return false;
+  }
+
   const int httpResponseCode = http.GET();
 
   if (httpResponseCode > 0) {

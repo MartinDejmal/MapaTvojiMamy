@@ -2,23 +2,33 @@
 
 #include <WiFi.h>
 
-#include "AppConfig.h"
+void WifiService::begin(const WifiConfig& config) {
+  if (!config.hostname.isEmpty()) {
+    WiFi.setHostname(config.hostname.c_str());
+  }
 
-void WifiService::begin() {
   Serial.print("Connecting to ");
-  Serial.println(AppConfig::WIFI_SSID);
+  Serial.println(config.ssid);
 
-  WiFi.begin(AppConfig::WIFI_SSID, AppConfig::WIFI_PASSWORD);
+  WiFi.begin(config.ssid.c_str(), config.password.c_str());
 
-  while (WiFi.status() != WL_CONNECTED) {
+  uint16_t retries = 0;
+  while (WiFi.status() != WL_CONNECTED && retries < 120) {
     delay(500);
     Serial.print(".");
+    ++retries;
   }
 
   Serial.println();
-  Serial.println("WiFi connected");
-  Serial.print("IP address: ");
-  Serial.println(localIp());
+
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.println("WiFi connected");
+    Serial.print("IP address: ");
+    Serial.println(localIp());
+    return;
+  }
+
+  Serial.println("WiFi connect timeout");
 }
 
 bool WifiService::isConnected() const {

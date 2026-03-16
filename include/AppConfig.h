@@ -1,21 +1,52 @@
 #pragma once
 
-namespace AppConfig {
+#include <Arduino.h>
 
-constexpr const char* WIFI_SSID = "";
-constexpr const char* WIFI_PASSWORD = "";
-constexpr const char* JSON_URL = "http://tmep.cz/vystup-json.php?okresy_cr=1";
+enum class ParserType {
+  INDEXED_H1,
+  INDEXED_VALUE_FIELD,
+  NAMED_VALUE_FIELD,
+  NAMED_COLOR_FIELD,
+};
 
+struct WifiConfig {
+  String ssid;
+  String password;
+  String hostname;
+};
+
+struct MapProfileConfig {
+  String url;
+  String parserType;
+  String locationField;
+  String valueField;
+  String colorField;
+  float minValue;
+  float maxValue;
+  uint32_t refreshIntervalMs;
+};
+
+struct RenderConfig {
+  uint8_t brightness;
+  int wheelMin;
+  int wheelMax;
+};
+
+struct AppConfig {
+  uint16_t schemaVersion;
+  WifiConfig wifi;
+  MapProfileConfig dataSource;
+  RenderConfig render;
+};
+
+namespace AppDefaults {
 constexpr int LED_COUNT = 77;
 constexpr int LED_PIN = 27;
 constexpr int LED_CHANNEL = 0;
-constexpr int LED_BRIGHTNESS = 10;
+constexpr uint16_t SCHEMA_VERSION = 1;
 
-constexpr unsigned long FETCH_INTERVAL_MS = 1000;
+AppConfig defaultConfig();
 
-constexpr int TEMP_MIN = -15;
-constexpr int TEMP_MAX = 40;
-constexpr int WHEEL_MIN = 170;
-constexpr int WHEEL_MAX = 0;
-
-}  // namespace AppConfig
+ParserType parserTypeFromString(const String& parserType, ParserType fallback);
+const char* parserTypeToString(ParserType parserType);
+}  // namespace AppDefaults
