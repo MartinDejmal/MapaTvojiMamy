@@ -1,7 +1,7 @@
 #include "ConfigStore.h"
 
 #include <ArduinoJson.h>
-#include <LITTLEFS.h>
+#include <LittleFS.h>
 
 namespace {
 constexpr const char* kConfigPath = "/config.json";
@@ -15,7 +15,7 @@ String maskedPassword(const String& value) {
 }  // namespace
 
 bool ConfigStore::begin() {
-  if (!LITTLEFS.begin(true)) {
+  if (!LittleFS.begin(true)) {
     Serial.println("ConfigStore: LittleFS mount failed");
     return false;
   }
@@ -27,13 +27,13 @@ bool ConfigStore::begin() {
 bool ConfigStore::load(AppConfig& outConfig) {
   AppConfig config = AppDefaults::defaultConfig();
 
-  if (!LITTLEFS.exists(kConfigPath)) {
+  if (!LittleFS.exists(kConfigPath)) {
     Serial.println("ConfigStore: /config.json missing, using defaults");
     outConfig = config;
     return false;
   }
 
-  File file = LITTLEFS.open(kConfigPath, "r");
+  File file = LittleFS.open(kConfigPath, "r");
   if (!file) {
     Serial.println("ConfigStore: cannot open /config.json, using defaults");
     outConfig = config;
@@ -57,7 +57,7 @@ bool ConfigStore::load(AppConfig& outConfig) {
 }
 
 bool ConfigStore::save(const AppConfig& config) {
-  File file = LITTLEFS.open(kConfigPath, "w");
+  File file = LittleFS.open(kConfigPath, "w");
   if (!file) {
     Serial.println("ConfigStore: cannot open /config.json for write");
     return false;

@@ -1,7 +1,6 @@
 #pragma once
 
 #include <Arduino.h>
-
 #include "AppConfig.h"
 #include "DataParser.h"
 

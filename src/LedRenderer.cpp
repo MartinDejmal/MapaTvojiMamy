@@ -1,30 +1,36 @@
 #include "LedRenderer.h"
 
-#include "Freenove_WS2812_Lib_for_ESP32.h"
+#include <FastLED.h>
 
 namespace {
-Freenove_ESP32_WS2812 strip(
-    AppDefaults::LED_COUNT,
-    AppDefaults::LED_PIN,
-    AppDefaults::LED_CHANNEL,
-    TYPE_GRB);
+CRGB leds[AppDefaults::LED_COUNT];
 
 float clampf(float value, float minValue, float maxValue) {
-  if (value < minValue) {
-    return minValue;
-  }
-  if (value > maxValue) {
-    return maxValue;
-  }
+  if (value < minValue) return minValue;
+  if (value > maxValue) return maxValue;
   return value;
+}
+
+// jednoduchá náhrada původního Wheel() mapování
+CRGB colorFromWheel(uint8_t pos) {
+  pos = 255 - pos;
+  if (pos < 85) {
+    return CRGB(255 - pos * 3, 0, pos * 3);
+  }
+  if (pos < 170) {
+    pos -= 85;
+    return CRGB(0, pos * 3, 255 - pos * 3);
+  }
+  pos -= 170;
+  return CRGB(pos * 3, 255 - pos * 3, 0);
 }
 }  // namespace
 
 void LedRenderer::begin(const RenderConfig& config) {
   renderConfig_ = config;
-
-  strip.begin();
-  strip.setBrightness(renderConfig_.brightness);
+  FastLED.addLeds<WS2812, AppDefaults::LED_PIN, GRB>(leds, AppDefaults::LED_COUNT);
+  FastLED.setBrightness(renderConfig_.brightness);
+  FastLED.clear(true);
 }
 
 void LedRenderer::render(const LedState* states, size_t count, const MapProfileConfig& mapConfig) {
@@ -34,21 +40,20 @@ void LedRenderer::render(const LedState* states, size_t count, const MapProfileC
 
   for (size_t i = 0; i < ledCount; ++i) {
     if (!states[i].active) {
-      strip.setLedColorData(i, 0, 0, 0);
+      leds[i] = CRGB::Black;
       continue;
     }
 
     if (states[i].hasNumericValue) {
-      const uint8_t wheel =
-          wheelFromValue(states[i].numericValue, mapConfig.minValue, mapConfig.maxValue);
-      strip.setLedColorData(i, strip.Wheel(wheel));
+      const uint8_t wheel = wheelFromValue(states[i].numericValue, mapConfig.minValue, mapConfig.maxValue);
+      leds[i] = colorFromWheel(wheel);
       continue;
     }
 
-    strip.setLedColorData(i, states[i].r, states[i].g, states[i].b);
+    leds[i] = CRGB(states[i].r, states[i].g, states[i].b);
   }
 
-  strip.show();
+  FastLED.show();
 }
 
 uint8_t LedRenderer::wheelFromValue(float value, float minValue, float maxValue) const {
@@ -64,12 +69,8 @@ uint8_t LedRenderer::wheelFromValue(float value, float minValue, float maxValue)
       normalized * static_cast<float>(renderConfig_.wheelMax - renderConfig_.wheelMin);
 
   int clamped = static_cast<int>(wheel);
-  if (clamped < 0) {
-    clamped = 0;
-  }
-  if (clamped > 255) {
-    clamped = 255;
-  }
+  if (clamped < 0) clamped = 0;
+  if (clamped > 255) clamped = 255;
 
   return static_cast<uint8_t>(clamped);
 }
