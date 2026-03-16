@@ -15,8 +15,10 @@ void App::begin() {
   Serial.println();
   Serial.println();
 
-  configStore_.begin();
-  if (!configStore_.load(config_)) {
+  if (!configStore_.begin()) {
+    Serial.println("App: ConfigStore init failed, using defaults only");
+    config_ = AppDefaults::defaultConfig();
+  } else if (!configStore_.load(config_)) {
     config_ = AppDefaults::defaultConfig();
     configStore_.save(config_);
   }
@@ -29,7 +31,7 @@ void App::begin() {
 
 void App::loop() {
   const unsigned long now = millis();
-  if ((now - lastFetchMs_) < config_.dataSource.refreshIntervalMs) {
+  if ((now - lastFetchMs_) < config_.mapProfile.refreshIntervalMs) {
     return;
   }
 
@@ -41,7 +43,7 @@ void App::loop() {
   }
 
   String payload;
-  if (!httpService_.get(config_.dataSource.url, payload)) {
+  if (!httpService_.get(config_.mapProfile.url, payload)) {
     return;
   }
 
@@ -51,7 +53,7 @@ void App::loop() {
   }
 
   memcpy(currentStates_, parsedStates_, sizeof(currentStates_));
-  ledRenderer_.render(currentStates_, AppDefaults::LED_COUNT, config_.dataSource);
+  ledRenderer_.render(currentStates_, AppDefaults::LED_COUNT, config_.mapProfile);
 }
 
 void App::printActiveConfig() const {
@@ -67,23 +69,23 @@ void App::printActiveConfig() const {
   Serial.print("    hostname: ");
   Serial.println(config_.wifi.hostname);
 
-  Serial.println("  dataSource:");
+  Serial.println("  mapProfile:");
   Serial.print("    url: ");
-  Serial.println(config_.dataSource.url);
+  Serial.println(config_.mapProfile.url);
   Serial.print("    parserType: ");
-  Serial.println(config_.dataSource.parserType);
+  Serial.println(config_.mapProfile.parserType);
   Serial.print("    locationField: ");
-  Serial.println(config_.dataSource.locationField);
+  Serial.println(config_.mapProfile.locationField);
   Serial.print("    valueField: ");
-  Serial.println(config_.dataSource.valueField);
+  Serial.println(config_.mapProfile.valueField);
   Serial.print("    colorField: ");
-  Serial.println(config_.dataSource.colorField);
+  Serial.println(config_.mapProfile.colorField);
   Serial.print("    minValue: ");
-  Serial.println(config_.dataSource.minValue);
+  Serial.println(config_.mapProfile.minValue);
   Serial.print("    maxValue: ");
-  Serial.println(config_.dataSource.maxValue);
+  Serial.println(config_.mapProfile.maxValue);
   Serial.print("    refreshIntervalMs: ");
-  Serial.println(config_.dataSource.refreshIntervalMs);
+  Serial.println(config_.mapProfile.refreshIntervalMs);
 
   Serial.println("  render:");
   Serial.print("    brightness: ");

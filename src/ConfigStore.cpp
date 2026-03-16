@@ -1,7 +1,7 @@
 #include "ConfigStore.h"
 
 #include <ArduinoJson.h>
-#include <LittleFS.h>
+#include <LITTLEFS.h>
 
 namespace {
 constexpr const char* kConfigPath = "/config.json";
@@ -15,7 +15,7 @@ String maskedPassword(const String& value) {
 }  // namespace
 
 bool ConfigStore::begin() {
-  if (!LittleFS.begin(true)) {
+  if (!LITTLEFS.begin(true)) {
     Serial.println("ConfigStore: LittleFS mount failed");
     return false;
   }
@@ -27,13 +27,13 @@ bool ConfigStore::begin() {
 bool ConfigStore::load(AppConfig& outConfig) {
   AppConfig config = AppDefaults::defaultConfig();
 
-  if (!LittleFS.exists(kConfigPath)) {
+  if (!LITTLEFS.exists(kConfigPath)) {
     Serial.println("ConfigStore: /config.json missing, using defaults");
     outConfig = config;
     return false;
   }
 
-  File file = LittleFS.open(kConfigPath, "r");
+  File file = LITTLEFS.open(kConfigPath, "r");
   if (!file) {
     Serial.println("ConfigStore: cannot open /config.json, using defaults");
     outConfig = config;
@@ -57,7 +57,7 @@ bool ConfigStore::load(AppConfig& outConfig) {
 }
 
 bool ConfigStore::save(const AppConfig& config) {
-  File file = LittleFS.open(kConfigPath, "w");
+  File file = LITTLEFS.open(kConfigPath, "w");
   if (!file) {
     Serial.println("ConfigStore: cannot open /config.json for write");
     return false;
@@ -84,17 +84,17 @@ bool ConfigStore::validateAndNormalize(AppConfig& config, String& reason) {
     return false;
   }
 
-  if (config.dataSource.url.isEmpty()) {
+  if (config.mapProfile.url.isEmpty()) {
     reason = "dataSource.url empty";
     return false;
   }
 
-  if (config.dataSource.refreshIntervalMs < 100) {
+  if (config.mapProfile.refreshIntervalMs < 100) {
     reason = "refreshIntervalMs too low";
     return false;
   }
 
-  if (config.dataSource.maxValue <= config.dataSource.minValue) {
+  if (config.mapProfile.maxValue <= config.mapProfile.minValue) {
     reason = "maxValue must be > minValue";
     return false;
   }
@@ -104,18 +104,18 @@ bool ConfigStore::validateAndNormalize(AppConfig& config, String& reason) {
   }
 
   ParserType parserType = AppDefaults::parserTypeFromString(
-      config.dataSource.parserType,
+      config.mapProfile.parserType,
       ParserType::INDEXED_H1);
-  config.dataSource.parserType = AppDefaults::parserTypeToString(parserType);
+  config.mapProfile.parserType = AppDefaults::parserTypeToString(parserType);
 
-  if (config.dataSource.locationField.isEmpty()) {
-    config.dataSource.locationField = defaults.dataSource.locationField;
+    if (config.mapProfile.locationField.isEmpty()) {
+      config.mapProfile.locationField = defaults.mapProfile.locationField;
   }
-  if (config.dataSource.valueField.isEmpty()) {
-    config.dataSource.valueField = defaults.dataSource.valueField;
+    if (config.mapProfile.valueField.isEmpty()) {
+      config.mapProfile.valueField = defaults.mapProfile.valueField;
   }
-  if (config.dataSource.colorField.isEmpty()) {
-    config.dataSource.colorField = defaults.dataSource.colorField;
+    if (config.mapProfile.colorField.isEmpty()) {
+      config.mapProfile.colorField = defaults.mapProfile.colorField;
   }
   if (config.wifi.hostname.isEmpty()) {
     config.wifi.hostname = defaults.wifi.hostname;
@@ -145,21 +145,21 @@ bool ConfigStore::fromJson(const String& json, AppConfig& outConfig, String& rea
   outConfig.wifi.hostname =
       String((const char*)(wifi["hostname"] | outConfig.wifi.hostname.c_str()));
 
-  JsonObject dataSource = doc["dataSource"];
-  outConfig.dataSource.url =
-      String((const char*)(dataSource["url"] | outConfig.dataSource.url.c_str()));
-  outConfig.dataSource.parserType = String(
-      (const char*)(dataSource["parserType"] | outConfig.dataSource.parserType.c_str()));
-  outConfig.dataSource.locationField = String(
-      (const char*)(dataSource["locationField"] | outConfig.dataSource.locationField.c_str()));
-  outConfig.dataSource.valueField = String(
-      (const char*)(dataSource["valueField"] | outConfig.dataSource.valueField.c_str()));
-  outConfig.dataSource.colorField = String(
-      (const char*)(dataSource["colorField"] | outConfig.dataSource.colorField.c_str()));
-  outConfig.dataSource.minValue = dataSource["minValue"] | outConfig.dataSource.minValue;
-  outConfig.dataSource.maxValue = dataSource["maxValue"] | outConfig.dataSource.maxValue;
-  outConfig.dataSource.refreshIntervalMs =
-      dataSource["refreshIntervalMs"] | outConfig.dataSource.refreshIntervalMs;
+  JsonObject mapProfile = doc["mapProfile"];
+  outConfig.mapProfile.url =
+      String((const char*)(mapProfile["url"] | outConfig.mapProfile.url.c_str()));
+  outConfig.mapProfile.parserType = String(
+      (const char*)(mapProfile["parserType"] | outConfig.mapProfile.parserType.c_str()));
+  outConfig.mapProfile.locationField = String(
+      (const char*)(mapProfile["locationField"] | outConfig.mapProfile.locationField.c_str()));
+  outConfig.mapProfile.valueField = String(
+      (const char*)(mapProfile["valueField"] | outConfig.mapProfile.valueField.c_str()));
+  outConfig.mapProfile.colorField = String(
+      (const char*)(mapProfile["colorField"] | outConfig.mapProfile.colorField.c_str()));
+  outConfig.mapProfile.minValue = mapProfile["minValue"] | outConfig.mapProfile.minValue;
+  outConfig.mapProfile.maxValue = mapProfile["maxValue"] | outConfig.mapProfile.maxValue;
+  outConfig.mapProfile.refreshIntervalMs =
+      mapProfile["refreshIntervalMs"] | outConfig.mapProfile.refreshIntervalMs;
 
   JsonObject render = doc["render"];
   outConfig.render.brightness = render["brightness"] | outConfig.render.brightness;
@@ -179,15 +179,15 @@ String ConfigStore::toJson(const AppConfig& config) const {
   wifi["password"] = config.wifi.password;
   wifi["hostname"] = config.wifi.hostname;
 
-  JsonObject dataSource = doc.createNestedObject("dataSource");
-  dataSource["url"] = config.dataSource.url;
-  dataSource["parserType"] = config.dataSource.parserType;
-  dataSource["locationField"] = config.dataSource.locationField;
-  dataSource["valueField"] = config.dataSource.valueField;
-  dataSource["colorField"] = config.dataSource.colorField;
-  dataSource["minValue"] = config.dataSource.minValue;
-  dataSource["maxValue"] = config.dataSource.maxValue;
-  dataSource["refreshIntervalMs"] = config.dataSource.refreshIntervalMs;
+  JsonObject mapProfile = doc.createNestedObject("mapProfile");
+  mapProfile["url"] = config.mapProfile.url;
+  mapProfile["parserType"] = config.mapProfile.parserType;
+  mapProfile["locationField"] = config.mapProfile.locationField;
+  mapProfile["valueField"] = config.mapProfile.valueField;
+  mapProfile["colorField"] = config.mapProfile.colorField;
+  mapProfile["minValue"] = config.mapProfile.minValue;
+  mapProfile["maxValue"] = config.mapProfile.maxValue;
+  mapProfile["refreshIntervalMs"] = config.mapProfile.refreshIntervalMs;
 
   JsonObject render = doc.createNestedObject("render");
   render["brightness"] = config.render.brightness;

@@ -31,26 +31,26 @@ bool DataParser::parse(
 
   JsonArrayConst array = doc.as<JsonArrayConst>();
   const ParserType parserType = AppDefaults::parserTypeFromString(
-      config.dataSource.parserType,
+      config.mapProfile.parserType,
       ParserType::INDEXED_H1);
 
   switch (parserType) {
     case ParserType::INDEXED_H1:
       return parseIndexedH1(array, outStates, count);
     case ParserType::INDEXED_VALUE_FIELD:
-      return parseIndexedValueField(array, config.dataSource.valueField, outStates, count);
+      return parseIndexedValueField(array, config.mapProfile.valueField, outStates, count);
     case ParserType::NAMED_VALUE_FIELD:
       return parseNamedValueField(
           array,
-          config.dataSource.locationField,
-          config.dataSource.valueField,
+          config.mapProfile.locationField,
+          config.mapProfile.valueField,
           outStates,
           count);
     case ParserType::NAMED_COLOR_FIELD:
       return parseNamedColorField(
           array,
-          config.dataSource.locationField,
-          config.dataSource.colorField,
+          config.mapProfile.locationField,
+          config.mapProfile.colorField,
           outStates,
           count);
     default:

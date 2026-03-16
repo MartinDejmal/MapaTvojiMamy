@@ -35,7 +35,7 @@ struct RenderConfig {
 struct AppConfig {
   uint16_t schemaVersion;
   WifiConfig wifi;
-  MapProfileConfig dataSource;
+  MapProfileConfig mapProfile;
   RenderConfig render;
 };
 

@@ -18,14 +18,14 @@ AppConfig defaultConfig() {
   config.wifi.password = "";
   config.wifi.hostname = "cr-mapa";
 
-  config.dataSource.url = "http://tmep.cz/vystup-json.php?okresy_cr=1";
-  config.dataSource.parserType = "INDEXED_H1";
-  config.dataSource.locationField = "name";
-  config.dataSource.valueField = "h1";
-  config.dataSource.colorField = "color";
-  config.dataSource.minValue = -15.0f;
-  config.dataSource.maxValue = 40.0f;
-  config.dataSource.refreshIntervalMs = 1000;
+  config.mapProfile.url = "http://tmep.cz/vystup-json.php?okresy_cr=1";
+  config.mapProfile.parserType = "INDEXED_H1";
+  config.mapProfile.locationField = "name";
+  config.mapProfile.valueField = "h1";
+  config.mapProfile.colorField = "color";
+  config.mapProfile.minValue = -15.0f;
+  config.mapProfile.maxValue = 40.0f;
+  config.mapProfile.refreshIntervalMs = 1000;
 
   config.render.brightness = 10;
   config.render.wheelMin = 170;
