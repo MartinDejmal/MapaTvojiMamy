@@ -148,3 +148,63 @@ pre {
   pointer-events: none;
   max-width: 220px;
 }
+
+/* Firmware tab */
+.fw-info {
+  background: #f0f4ff;
+  border: 1px solid #c8d6f5;
+  border-radius: 6px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+
+.fw-warning {
+  background: #fff8e1;
+  border: 1px solid #ffe082;
+  border-radius: 6px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  font-size: 13px;
+  color: #5a4000;
+}
+
+#fwForm {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.fw-label {
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+  max-width: 420px;
+}
+
+.fw-progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.fw-progress {
+  flex: 1;
+  height: 18px;
+}
+
+.fw-status {
+  margin-top: 10px;
+  font-size: 14px;
+  font-weight: bold;
+  min-height: 20px;
+}
+
+.fw-status-ok {
+  color: #1a6b2e;
+}
+
+.fw-status-error {
+  color: #b42318;
+}

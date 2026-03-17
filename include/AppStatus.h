@@ -21,6 +21,11 @@ struct AppStatus {
   int unknownCount;
   int activeCount;
   String lastParserError;
+  // Firmware metadata
+  String firmwareVersion;
+  String buildDate;
+  String buildTime;
+  bool otaSupported;
 };
 
 struct SaveConfigResult {

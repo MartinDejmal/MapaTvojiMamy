@@ -120,6 +120,10 @@ AppStatus App::getStatus() const {
   status.unknownCount = unknownCount_;
   status.activeCount = activeCount_;
   status.lastParserError = lastParserError_;
+  status.firmwareVersion = FW_VERSION;
+  status.buildDate = __DATE__;
+  status.buildTime = __TIME__;
+  status.otaSupported = true;
   return status;
 }
 

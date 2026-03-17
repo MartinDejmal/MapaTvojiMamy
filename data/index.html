@@ -22,6 +22,7 @@
       <button type="button" class="tab-button" data-tab="config">Konfigurace</button>
       <button type="button" class="tab-button" data-tab="testfetch">Test fetch</button>
       <button type="button" class="tab-button" data-tab="mapa">Mapa</button>
+      <button type="button" class="tab-button" data-tab="firmware">Firmware</button>
     </nav>
 
     <section class="tab-panel active" data-panel="status">
@@ -76,6 +77,26 @@
         <div id="mapOverlay" class="map-overlay"></div>
       </div>
       <div id="mapTooltip" class="map-tooltip" hidden></div>
+    </section>
+    <section class="tab-panel" data-panel="firmware">
+      <h2>Firmware</h2>
+      <div id="fwInfo" class="fw-info">Načítání...</div>
+      <div class="fw-warning">
+        ⚠️ Nahraj pouze <strong>firmware binárku (.bin)</strong> určenou pro toto zařízení.
+        Nenahrávej filesystem image ani jiné soubory.
+      </div>
+      <form id="fwForm">
+        <label class="fw-label">
+          Vybrat soubor firmware (.bin)
+          <input type="file" id="fwFile" accept=".bin" required />
+        </label>
+        <button type="submit" id="fwUploadBtn">Nahrát firmware</button>
+      </form>
+      <div id="fwProgressWrap" class="fw-progress-wrap" hidden>
+        <progress id="fwProgress" class="fw-progress" value="0" max="100"></progress>
+        <span id="fwProgressPct">0 %</span>
+      </div>
+      <p id="fwStatus" class="fw-status"></p>
     </section>
   </main>
 
