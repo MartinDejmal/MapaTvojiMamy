@@ -311,7 +311,7 @@ bool DataParser::parseObjectListIdRgb(
       continue;
     }
 
-    const int ledIndex = id.as<int>();
+    const int ledIndex = id.as<int>() - 1;
     if (ledIndex < 0 || static_cast<size_t>(ledIndex) >= count) {
       ++unknownCount;
       lastItemError = "OBJECT_LIST_ID_RGB id out of range";
