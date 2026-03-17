@@ -47,6 +47,10 @@ void App::begin() {
       [this](const String& json) { return saveConfigFromJson(json); },
       [this]() { return runTestFetch(); },
       [this](LedState* outStates, size_t count) { getCurrentLedStates(outStates, count); });
+
+  // Trigger an immediate fetch on the first loop() iteration instead of
+  // waiting for the full refreshIntervalMs to elapse after boot.
+  lastFetchMs_ = millis() - config_.mapProfile.refreshIntervalMs - 1;
 }
 
 void App::loop() {
