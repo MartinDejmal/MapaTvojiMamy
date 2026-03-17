@@ -15,6 +15,8 @@ class WebConfigServer {
   using TestFetchRunner = std::function<TestFetchResult()>;
 
   void begin(
+      bool apMode,
+      const String& apIp,
       StatusProvider statusProvider,
       ConfigJsonProvider configJsonProvider,
       ConfigSaver configSaver,
@@ -31,9 +33,12 @@ class WebConfigServer {
   void handleRoot();
   void handleAppJs();
   void handleAppCss();
+  void handleCaptivePortalRedirect();
   bool serveStaticFile(const char* path, const char* contentType);
 
   WebServer server_{80};
+  bool apMode_ = false;
+  String apIp_;
   StatusProvider statusProvider_;
   ConfigJsonProvider configJsonProvider_;
   ConfigSaver configSaver_;

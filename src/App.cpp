@@ -40,6 +40,8 @@ void App::begin() {
   ledRenderer_.begin(config_.render);
 
   webConfigServer_.begin(
+      wifiService_.isApMode(),
+      wifiService_.apIp(),
       [this]() { return getStatus(); },
       [this]() { return getConfigJson(); },
       [this](const String& json) { return saveConfigFromJson(json); },
@@ -47,6 +49,7 @@ void App::begin() {
 }
 
 void App::loop() {
+  wifiService_.processDns();
   webConfigServer_.handleClient();
 
   const unsigned long now = millis();
