@@ -28,33 +28,39 @@ bool DataParser::parse(
     return false;
   }
 
-  if (!doc.is<JsonArrayConst>()) {
-    Serial.println("DataParser: root must be array");
-    if (outStats != nullptr) {
-      outStats->error = "Root JSON must be array";
-    }
-    return false;
-  }
-
-  JsonArrayConst array = doc.as<JsonArrayConst>();
   const ParserType parserType = AppDefaults::parserTypeFromString(
       config.mapProfile.parserType,
       ParserType::INDEXED_H1);
 
   switch (parserType) {
     case ParserType::INDEXED_H1:
-      return parseIndexedH1(array, outStates, count, outStats);
     case ParserType::INDEXED_VALUE_FIELD:
-      return parseIndexedValueField(array, config.mapProfile.valueField, outStates, count, outStats);
     case ParserType::NAMED_VALUE_FIELD:
-      return parseNamedValueField(
-          array,
-          config.mapProfile.locationField,
-          config.mapProfile.valueField,
-          outStates,
-          count,
-          outStats);
-    case ParserType::NAMED_COLOR_FIELD:
+    case ParserType::NAMED_COLOR_FIELD: {
+      if (!doc.is<JsonArrayConst>()) {
+        Serial.println("DataParser: root must be array");
+        if (outStats != nullptr) {
+          outStats->error = "Root JSON must be array";
+        }
+        return false;
+      }
+
+      JsonArrayConst array = doc.as<JsonArrayConst>();
+      if (parserType == ParserType::INDEXED_H1) {
+        return parseIndexedH1(array, outStates, count, outStats);
+      }
+      if (parserType == ParserType::INDEXED_VALUE_FIELD) {
+        return parseIndexedValueField(array, config.mapProfile.valueField, outStates, count, outStats);
+      }
+      if (parserType == ParserType::NAMED_VALUE_FIELD) {
+        return parseNamedValueField(
+            array,
+            config.mapProfile.locationField,
+            config.mapProfile.valueField,
+            outStates,
+            count,
+            outStats);
+      }
       return parseNamedColorField(
           array,
           config.mapProfile.locationField,
@@ -62,6 +68,19 @@ bool DataParser::parse(
           outStates,
           count,
           outStats);
+    }
+    case ParserType::OBJECT_LIST_ID_RGB: {
+      if (!doc.is<JsonObjectConst>()) {
+        Serial.println("DataParser: root must be object");
+        if (outStats != nullptr) {
+          outStats->error = "Root JSON must be object";
+        }
+        return false;
+      }
+
+      JsonObjectConst rootObject = doc.as<JsonObjectConst>();
+      return parseObjectListIdRgb(rootObject, outStates, count, outStats);
+    }
     default:
       Serial.println("DataParser: unsupported parser type");
       if (outStats != nullptr) {
@@ -254,6 +273,97 @@ bool DataParser::parseNamedColorField(
     if (outStats != nullptr) {
       outStats->error = "NAMED_COLOR_FIELD parsed no values";
     }
+    return false;
+  }
+
+  return true;
+}
+
+bool DataParser::parseObjectListIdRgb(
+    JsonObjectConst rootObject,
+    LedState* outStates,
+    size_t count,
+    ParseStats* outStats) const {
+  JsonArrayConst list = rootObject["seznam"].as<JsonArrayConst>();
+  if (list.isNull()) {
+    Serial.println("DataParser: OBJECT_LIST_ID_RGB missing 'seznam' array");
+    if (outStats != nullptr) {
+      outStats->error = "OBJECT_LIST_ID_RGB missing 'seznam' array";
+    }
+    return false;
+  }
+
+  int recognizedCount = 0;
+  int unknownCount = 0;
+  String lastItemError = "";
+
+  for (JsonVariantConst item : list) {
+    if (!item.is<JsonObjectConst>()) {
+      ++unknownCount;
+      lastItemError = "OBJECT_LIST_ID_RGB item is not object";
+      continue;
+    }
+
+    JsonVariantConst id = item["id"];
+    if (!id.is<int>()) {
+      ++unknownCount;
+      lastItemError = "OBJECT_LIST_ID_RGB invalid id";
+      continue;
+    }
+
+    const int ledIndex = id.as<int>();
+    if (ledIndex < 0 || static_cast<size_t>(ledIndex) >= count) {
+      ++unknownCount;
+      lastItemError = "OBJECT_LIST_ID_RGB id out of range";
+      continue;
+    }
+
+    JsonVariantConst rValue = item["r"];
+    JsonVariantConst gValue = item["g"];
+    JsonVariantConst bValue = item["b"];
+    if (!rValue.is<int>() || !gValue.is<int>() || !bValue.is<int>()) {
+      ++unknownCount;
+      lastItemError = "OBJECT_LIST_ID_RGB missing/invalid rgb component";
+      continue;
+    }
+
+    const int r = rValue.as<int>();
+    const int g = gValue.as<int>();
+    const int b = bValue.as<int>();
+    if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255) {
+      ++unknownCount;
+      lastItemError = "OBJECT_LIST_ID_RGB rgb component out of range";
+      continue;
+    }
+
+    outStates[ledIndex].active = true;
+    outStates[ledIndex].hasNumericValue = false;
+    outStates[ledIndex].r = static_cast<uint8_t>(r);
+    outStates[ledIndex].g = static_cast<uint8_t>(g);
+    outStates[ledIndex].b = static_cast<uint8_t>(b);
+    ++recognizedCount;
+  }
+
+  int activeCount = 0;
+  for (size_t i = 0; i < count; ++i) {
+    if (outStates[i].active) {
+      ++activeCount;
+    }
+  }
+
+  if (outStats != nullptr) {
+    outStats->recognizedCount = recognizedCount;
+    outStats->unknownCount = unknownCount;
+    outStats->activeCount = activeCount;
+    if (recognizedCount == 0 && outStats->error.isEmpty()) {
+      outStats->error = "OBJECT_LIST_ID_RGB parsed no values";
+    } else if (!lastItemError.isEmpty()) {
+      outStats->error = lastItemError;
+    }
+  }
+
+  if (recognizedCount == 0) {
+    Serial.println("DataParser: OBJECT_LIST_ID_RGB parsed no values");
     return false;
   }
 

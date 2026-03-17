@@ -57,6 +57,11 @@ class DataParser {
       LedState* outStates,
       size_t count,
       ParseStats* outStats);
+  bool parseObjectListIdRgb(
+      JsonObjectConst rootObject,
+      LedState* outStates,
+      size_t count,
+      ParseStats* outStats) const;
   bool parseHexColor(const String& hex, uint8_t& r, uint8_t& g, uint8_t& b) const;
   void clearStates(LedState* outStates, size_t count) const;
   void resetStats(ParseStats* outStats) const;
