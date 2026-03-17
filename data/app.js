@@ -2,6 +2,10 @@ const statusBox = document.getElementById('statusBox');
 const configForm = document.getElementById('configForm');
 const formMessage = document.getElementById('formMessage');
 const testFetchBox = document.getElementById('testFetchBox');
+const apBanner = document.getElementById('apBanner');
+const apSsidLabel = document.getElementById('apSsidLabel');
+const apIpLabel = document.getElementById('apIpLabel');
+const apLink = document.getElementById('apLink');
 
 async function fetchJson(url, options = {}) {
   const response = await fetch(url, {
@@ -58,10 +62,22 @@ function collectConfig() {
   };
 }
 
+function updateApBanner(status) {
+  if (status.apMode) {
+    apSsidLabel.textContent = status.apSsid || '';
+    apIpLabel.textContent = status.apIp || '192.168.4.1';
+    apLink.href = `http://${status.apIp || '192.168.4.1'}/`;
+    apBanner.hidden = false;
+  } else {
+    apBanner.hidden = true;
+  }
+}
+
 async function refreshStatus() {
   try {
     const status = await fetchJson('/api/status');
     statusBox.textContent = JSON.stringify(status, null, 2);
+    updateApBanner(status);
   } catch (e) {
     statusBox.textContent = `Chyba statusu: ${e.message}`;
   }

@@ -50,6 +50,9 @@ void WebConfigServer::handleStatus() {
   const AppStatus status = statusProvider_();
   StaticJsonDocument<1024> doc;
   doc["wifiConnected"] = status.wifiConnected;
+  doc["apMode"] = status.apMode;
+  doc["apSsid"] = status.apSsid;
+  doc["apIp"] = status.apIp;
   doc["ip"] = status.ip;
   doc["hostname"] = status.hostname;
   doc["uptimeMs"] = status.uptimeMs;

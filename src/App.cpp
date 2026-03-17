@@ -95,6 +95,9 @@ void App::loop() {
 AppStatus App::getStatus() const {
   AppStatus status;
   status.wifiConnected = wifiService_.isConnected();
+  status.apMode = wifiService_.isApMode();
+  status.apSsid = wifiService_.apSsid();
+  status.apIp = wifiService_.apIp();
   status.ip = wifiService_.localIp();
   status.hostname = config_.wifi.hostname;
   status.uptimeMs = millis();

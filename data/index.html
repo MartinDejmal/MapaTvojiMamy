@@ -10,6 +10,13 @@
   <main class="container">
     <h1>MapaTvojiMamy - Admin</h1>
 
+    <div id="apBanner" class="ap-banner" hidden>
+      <strong>Zařízení běží v AP režimu.</strong>
+      Připojte se k Wi-Fi síti <span id="apSsidLabel"></span> a otevřete
+      <a id="apLink" href="#">http://<span id="apIpLabel"></span>/</a>.
+      Vyplňte Wi-Fi přihlašovací údaje a uložte konfiguraci, poté zařízení restartujte.
+    </div>
+
     <section>
       <h2>Status</h2>
       <pre id="statusBox">Načítám...</pre>
