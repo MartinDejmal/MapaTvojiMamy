@@ -4,6 +4,9 @@
 
 struct AppStatus {
   bool wifiConnected;
+  bool apMode;
+  String apSsid;
+  String apIp;
   String ip;
   String hostname;
   unsigned long uptimeMs;
