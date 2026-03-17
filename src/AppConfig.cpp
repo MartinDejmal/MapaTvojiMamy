@@ -49,6 +49,9 @@ ParserType parserTypeFromString(const String& parserType, ParserType fallback) {
   if (normalized == "NAMED_COLOR_FIELD") {
     return ParserType::NAMED_COLOR_FIELD;
   }
+  if (normalized == "OBJECT_LIST_ID_RGB") {
+    return ParserType::OBJECT_LIST_ID_RGB;
+  }
 
   return fallback;
 }
@@ -63,6 +66,8 @@ const char* parserTypeToString(ParserType parserType) {
       return "NAMED_VALUE_FIELD";
     case ParserType::NAMED_COLOR_FIELD:
       return "NAMED_COLOR_FIELD";
+    case ParserType::OBJECT_LIST_ID_RGB:
+      return "OBJECT_LIST_ID_RGB";
     default:
       return "INDEXED_H1";
   }

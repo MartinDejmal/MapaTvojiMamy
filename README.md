@@ -164,9 +164,9 @@ Konfigurace se ukládá jako `/config.json` v LittleFS. Po prvním nahrání lze
 |---|---|
 | `url` | URL JSON API, ze kterého se stahují data |
 | `parserType` | Formát JSON odpovědi (viz [Typy parserů](#typy-parserů)) |
-| `locationField` | Název pole s názvem okresu (pro `NAMED_*` parsery) |
-| `valueField` | Název pole s číselnou hodnotou (pro `INDEXED_VALUE_FIELD`, `NAMED_VALUE_FIELD`) |
-| `colorField` | Název pole s barvou ve formátu `#RRGGBB` (pro `NAMED_COLOR_FIELD`) |
+| `locationField` | Název pole s názvem okresu (pro `NAMED_*` parsery); pro `OBJECT_LIST_ID_RGB` se nepoužívá |
+| `valueField` | Název pole s číselnou hodnotou (pro `INDEXED_VALUE_FIELD`, `NAMED_VALUE_FIELD`); pro `OBJECT_LIST_ID_RGB` se nepoužívá |
+| `colorField` | Název pole s barvou ve formátu `#RRGGBB` (pro `NAMED_COLOR_FIELD`); pro `OBJECT_LIST_ID_RGB` se nepoužívá |
 | `minValue` | Minimální hodnota pro mapování na barvu (výchozí: `-15.0`) |
 | `maxValue` | Maximální hodnota pro mapování na barvu (výchozí: `40.0`) |
 | `refreshIntervalMs` | Interval obnovení dat v milisekundách (výchozí: `1000`) |
@@ -231,6 +231,41 @@ Pojmenované pole, barva LED se čte přímo z `colorField` ve formátu hex (`#R
   { "name": "Beroun", "color": "#00aaff" },
   ...
 ]
+```
+
+### `OBJECT_LIST_ID_RGB`
+
+Root JSON je objekt. Parser očekává pole `seznam`, kde každá položka obsahuje `id` (index LED) a přímé RGB složky `r`, `g`, `b`. Pole `utc_datum` (a jakákoliv další metadata) jsou tolerována a ignorována.
+
+```json
+{
+  "utc_datum": {
+    "rok": 2026,
+    "mesic": 3,
+    "den": 17,
+    "hodina": 18,
+    "minuta": 20
+  },
+  "seznam": [
+    { "id": 35, "r": 48, "g": 0, "b": 168 },
+    { "id": 42, "r": 0, "g": 0, "b": 252 }
+  ]
+}
+```
+
+```json
+{
+  "mapProfile": {
+    "url": "http://example.local/mapa.json",
+    "parserType": "OBJECT_LIST_ID_RGB",
+    "locationField": "",
+    "valueField": "",
+    "colorField": "",
+    "minValue": -15,
+    "maxValue": 40,
+    "refreshIntervalMs": 1000
+  }
+}
 ```
 
 ---

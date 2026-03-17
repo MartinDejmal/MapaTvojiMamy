@@ -7,6 +7,7 @@ enum class ParserType {
   INDEXED_VALUE_FIELD,
   NAMED_VALUE_FIELD,
   NAMED_COLOR_FIELD,
+  OBJECT_LIST_ID_RGB,
 };
 
 struct WifiConfig {
