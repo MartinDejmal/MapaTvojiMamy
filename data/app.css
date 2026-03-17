@@ -25,6 +25,33 @@ body {
   color: #0d6efd;
 }
 
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.tab-button {
+  border: 1px solid #b8c2d6;
+  border-radius: 6px;
+  background: #edf2fb;
+  cursor: pointer;
+}
+
+.tab-button.active {
+  background: #1f6feb;
+  color: #fff;
+  border-color: #1f6feb;
+}
+
+.tab-panel {
+  display: none;
+}
+
+.tab-panel.active {
+  display: block;
+}
+
 section {
   background: white;
   border-radius: 8px;
@@ -66,4 +93,58 @@ pre {
 
 #formMessage {
   font-weight: bold;
+}
+
+.map-error {
+  color: #b42318;
+  min-height: 20px;
+}
+
+.map-container {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  border: 1px solid #d8dee9;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f9fafb;
+}
+
+#mapImage {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.map-overlay {
+  position: absolute;
+  inset: 0;
+}
+
+.map-dot {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.3);
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.5);
+}
+
+.map-dot.inactive {
+  width: 8px;
+  height: 8px;
+}
+
+.map-tooltip {
+  position: absolute;
+  z-index: 5;
+  background: rgba(11, 16, 32, 0.95);
+  color: #e2e8f0;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 12px;
+  line-height: 1.4;
+  pointer-events: none;
+  max-width: 220px;
 }

@@ -45,7 +45,8 @@ void App::begin() {
       [this]() { return getStatus(); },
       [this]() { return getConfigJson(); },
       [this](const String& json) { return saveConfigFromJson(json); },
-      [this]() { return runTestFetch(); });
+      [this]() { return runTestFetch(); },
+      [this](LedState* outStates, size_t count) { getCurrentLedStates(outStates, count); });
 }
 
 void App::loop() {
@@ -149,6 +150,20 @@ SaveConfigResult App::saveConfigFromJson(const String& json) {
   result.requiresRestart = wifiChanged;
   result.message = wifiChanged ? "Saved. Wi-Fi changes require reconnect/restart." : "Saved and applied.";
   return result;
+}
+
+
+void App::getCurrentLedStates(LedState* outStates, size_t count) const {
+  if (outStates == nullptr || count == 0) {
+    return;
+  }
+
+  const size_t copyCount = count < AppDefaults::LED_COUNT ? count : AppDefaults::LED_COUNT;
+  memcpy(outStates, currentStates_, copyCount * sizeof(LedState));
+
+  for (size_t i = copyCount; i < count; ++i) {
+    outStates[i] = LedState{};
+  }
 }
 
 TestFetchResult App::runTestFetch() {

@@ -9,13 +9,15 @@ void WebConfigServer::begin(
     StatusProvider statusProvider,
     ConfigJsonProvider configJsonProvider,
     ConfigSaver configSaver,
-    TestFetchRunner testFetchRunner) {
+    TestFetchRunner testFetchRunner,
+    LedStatesProvider ledStatesProvider) {
   apMode_ = apMode;
   apIp_ = apIp;
   statusProvider_ = statusProvider;
   configJsonProvider_ = configJsonProvider;
   configSaver_ = configSaver;
   testFetchRunner_ = testFetchRunner;
+  ledStatesProvider_ = ledStatesProvider;
 
   registerRoutes();
   server_.begin();
@@ -36,6 +38,7 @@ void WebConfigServer::registerRoutes() {
   server_.on("/api/config", HTTP_POST, [this]() { handlePostConfig(); });
   server_.on("/api/test-fetch", HTTP_POST, [this]() { handleTestFetch(); });
   server_.on("/api/restart", HTTP_POST, [this]() { handleRestart(); });
+  server_.on("/api/map-state", HTTP_GET, [this]() { handleMapState(); });
 
   // Captive portal detection endpoints for iOS, Android, Windows
   if (apMode_) {
@@ -142,6 +145,48 @@ void WebConfigServer::handleTestFetch() {
   String response;
   serializeJson(doc, response);
   server_.send(result.ok ? 200 : 500, "application/json", response);
+}
+
+void WebConfigServer::handleMapState() {
+  if (!ledStatesProvider_) {
+    server_.send(500, "application/json", "{\"ok\":false,\"error\":\"map callback missing\"}");
+    return;
+  }
+
+  constexpr size_t kLedCount = AppDefaults::LED_COUNT;
+  LedState states[kLedCount]{};
+  ledStatesProvider_(states, kLedCount);
+
+  DynamicJsonDocument doc(24576);
+  JsonObject image = doc.createNestedObject("image");
+  image["url"] = "/mapa-okresy-cr.jpg";
+  image["width"] = MapLayout::MAP_IMAGE_WIDTH;
+  image["height"] = MapLayout::MAP_IMAGE_HEIGHT;
+
+  JsonArray points = doc.createNestedArray("points");
+  const MapPoint* mapPoints = mapLayout_.points();
+  const size_t pointCount = mapLayout_.count();
+  for (size_t i = 0; i < pointCount; ++i) {
+    const MapPoint& point = mapPoints[i];
+    const bool indexValid = point.index < kLedCount;
+    const LedState state = indexValid ? states[point.index] : LedState{};
+
+    JsonObject item = points.createNestedObject();
+    item["index"] = point.index;
+    item["name"] = point.name;
+    item["x"] = point.x;
+    item["y"] = point.y;
+    item["active"] = state.active;
+    item["hasNumericValue"] = state.hasNumericValue;
+    item["numericValue"] = state.numericValue;
+    item["r"] = state.r;
+    item["g"] = state.g;
+    item["b"] = state.b;
+  }
+
+  String response;
+  serializeJson(doc, response);
+  server_.send(200, "application/json", response);
 }
 
 void WebConfigServer::handleRestart() {

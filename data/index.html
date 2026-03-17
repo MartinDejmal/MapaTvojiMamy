@@ -3,49 +3,56 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>MapaTvojiMamy Admin</title>
+  <title>Mapa Tvojí Mámy - Admin</title>
   <link rel="stylesheet" href="/app.css" />
 </head>
 <body>
   <main class="container">
-    <h1>MapaTvojiMamy - Admin</h1>
+    <h1>Mapa Tvojí Mámy - Admin</h1>
 
     <div id="apBanner" class="ap-banner" hidden>
-      <strong>Zařízení běží v AP režimu.</strong>
-      Připojte se k Wi-Fi síti <span id="apSsidLabel"></span> a otevřete
-      <a id="apLink" href="#">http://<span id="apIpLabel"></span>/</a>.
-      Vyplňte Wi-Fi přihlašovací údaje a uložte konfiguraci, poté zařízení restartujte.
+      <strong>AP režim aktivní</strong><br />
+      SSID: <span id="apSsidLabel"></span><br />
+      IP: <span id="apIpLabel"></span><br />
+      Otevři: <a id="apLink" href="#"></a>
     </div>
 
-    <section>
+    <nav class="tabs">
+      <button type="button" class="tab-button active" data-tab="status">Status</button>
+      <button type="button" class="tab-button" data-tab="config">Konfigurace</button>
+      <button type="button" class="tab-button" data-tab="testfetch">Test fetch</button>
+      <button type="button" class="tab-button" data-tab="mapa">Mapa</button>
+    </nav>
+
+    <section class="tab-panel active" data-panel="status">
       <h2>Status</h2>
-      <pre id="statusBox">Načítám...</pre>
+      <pre id="statusBox">Načítání...</pre>
     </section>
 
-    <section>
+    <section class="tab-panel" data-panel="config">
       <h2>Konfigurace</h2>
       <form id="configForm">
-        <label>Wi-Fi SSID <input name="wifiSsid" /></label>
-        <label>Wi-Fi password <input name="wifiPassword" type="password" /></label>
-        <label>Hostname <input name="hostname" /></label>
-        <label>Data URL <input name="dataUrl" /></label>
-        <label>parserType
+        <label>Wi-Fi SSID <input name="wifiSsid" type="text" required /></label>
+        <label>Wi-Fi heslo <input name="wifiPassword" type="password" /></label>
+        <label>Hostname <input name="hostname" type="text" /></label>
+        <label>Data URL <input name="dataUrl" type="url" required /></label>
+        <label>Parser type
           <select name="parserType">
-            <option>INDEXED_H1</option>
-            <option>INDEXED_VALUE_FIELD</option>
-            <option>NAMED_VALUE_FIELD</option>
-            <option>NAMED_COLOR_FIELD</option>
+            <option value="INDEXED_H1">INDEXED_H1</option>
+            <option value="INDEXED_VALUE_FIELD">INDEXED_VALUE_FIELD</option>
+            <option value="NAMED_VALUE_FIELD">NAMED_VALUE_FIELD</option>
+            <option value="NAMED_COLOR_FIELD">NAMED_COLOR_FIELD</option>
           </select>
         </label>
-        <label>locationField <input name="locationField" /></label>
-        <label>valueField <input name="valueField" /></label>
-        <label>colorField <input name="colorField" /></label>
-        <label>minValue <input name="minValue" type="number" step="any" /></label>
-        <label>maxValue <input name="maxValue" type="number" step="any" /></label>
-        <label>refreshIntervalMs <input name="refreshIntervalMs" type="number" /></label>
-        <label>brightness <input name="brightness" type="number" min="0" max="255" /></label>
-        <label>wheelMin <input name="wheelMin" type="number" /></label>
-        <label>wheelMax <input name="wheelMax" type="number" /></label>
+        <label>Location field <input name="locationField" type="text" /></label>
+        <label>Value field <input name="valueField" type="text" /></label>
+        <label>Color field <input name="colorField" type="text" /></label>
+        <label>Min value <input name="minValue" type="number" step="0.01" /></label>
+        <label>Max value <input name="maxValue" type="number" step="0.01" /></label>
+        <label>Refresh interval (ms) <input name="refreshIntervalMs" type="number" min="500" /></label>
+        <label>Brightness <input name="brightness" type="number" min="0" max="255" /></label>
+        <label>Wheel min <input name="wheelMin" type="number" /></label>
+        <label>Wheel max <input name="wheelMax" type="number" /></label>
         <div class="buttons">
           <button type="submit">Save</button>
           <button type="button" id="testFetchBtn">Test fetch</button>
@@ -55,9 +62,19 @@
       <p id="formMessage"></p>
     </section>
 
-    <section>
+    <section class="tab-panel" data-panel="testfetch">
       <h2>Test fetch výsledek</h2>
       <pre id="testFetchBox">---</pre>
+    </section>
+
+    <section class="tab-panel" data-panel="mapa">
+      <h2>Mapa</h2>
+      <p id="mapError" class="map-error"></p>
+      <div id="mapContainer" class="map-container">
+        <img id="mapImage" alt="Slepá mapa ČR" />
+        <div id="mapOverlay" class="map-overlay"></div>
+      </div>
+      <div id="mapTooltip" class="map-tooltip" hidden></div>
     </section>
   </main>
 

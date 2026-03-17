@@ -22,6 +22,7 @@ class App {
   String getConfigJson() const;
   SaveConfigResult saveConfigFromJson(const String& json);
   TestFetchResult runTestFetch();
+  void getCurrentLedStates(LedState* outStates, size_t count) const;
 
   AppConfig config_ = AppDefaults::defaultConfig();
 

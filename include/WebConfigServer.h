@@ -5,7 +5,10 @@
 
 #include <functional>
 
+#include "AppConfig.h"
 #include "AppStatus.h"
+#include "DataParser.h"
+#include "MapLayout.h"
 
 class WebConfigServer {
  public:
@@ -13,6 +16,7 @@ class WebConfigServer {
   using ConfigJsonProvider = std::function<String()>;
   using ConfigSaver = std::function<SaveConfigResult(const String&)>;
   using TestFetchRunner = std::function<TestFetchResult()>;
+  using LedStatesProvider = std::function<void(LedState* outStates, size_t count)>;
 
   void begin(
       bool apMode,
@@ -20,7 +24,8 @@ class WebConfigServer {
       StatusProvider statusProvider,
       ConfigJsonProvider configJsonProvider,
       ConfigSaver configSaver,
-      TestFetchRunner testFetchRunner);
+      TestFetchRunner testFetchRunner,
+      LedStatesProvider ledStatesProvider);
   void handleClient();
 
  private:
@@ -30,6 +35,7 @@ class WebConfigServer {
   void handlePostConfig();
   void handleTestFetch();
   void handleRestart();
+  void handleMapState();
   void handleRoot();
   void handleAppJs();
   void handleAppCss();
@@ -43,4 +49,6 @@ class WebConfigServer {
   ConfigJsonProvider configJsonProvider_;
   ConfigSaver configSaver_;
   TestFetchRunner testFetchRunner_;
+  LedStatesProvider ledStatesProvider_;
+  MapLayout mapLayout_;
 };
