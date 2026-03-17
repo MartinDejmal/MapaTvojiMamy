@@ -198,6 +198,10 @@ function activateTab(tabName) {
   } else {
     stopMapPolling();
   }
+
+  if (tabName === 'firmware') {
+    loadFwInfo();
+  }
 }
 
 async function refreshStatus() {
@@ -258,6 +262,113 @@ document.getElementById('restartBtn').addEventListener('click', async () => {
 
 tabButtons.forEach((button) => {
   button.addEventListener('click', () => activateTab(button.dataset.tab));
+});
+
+// --- Firmware tab ---
+
+const fwForm = document.getElementById('fwForm');
+const fwFile = document.getElementById('fwFile');
+const fwUploadBtn = document.getElementById('fwUploadBtn');
+const fwProgressWrap = document.getElementById('fwProgressWrap');
+const fwProgress = document.getElementById('fwProgress');
+const fwProgressPct = document.getElementById('fwProgressPct');
+const fwStatus = document.getElementById('fwStatus');
+const fwInfo = document.getElementById('fwInfo');
+
+function setFwStatus(msg, isError) {
+  fwStatus.textContent = msg;
+  fwStatus.className = 'fw-status' + (isError ? ' fw-status-error' : ' fw-status-ok');
+}
+
+async function loadFwInfo() {
+  try {
+    const status = await fetchJson('/api/status');
+    fwInfo.innerHTML =
+      `Verze firmware: <strong>${status.firmwareVersion || '—'}</strong> &nbsp;|&nbsp; ` +
+      `Build: <strong>${status.buildDate || '—'} ${status.buildTime || ''}</strong>`;
+  } catch (e) {
+    fwInfo.textContent = 'Nepodařilo se načíst info o firmware.';
+  }
+}
+
+fwForm.addEventListener('submit', (event) => {
+  event.preventDefault();
+
+  const file = fwFile.files[0];
+  if (!file) {
+    setFwStatus('Nevybral jsi žádný soubor.', true);
+    return;
+  }
+  if (!file.name.endsWith('.bin')) {
+    setFwStatus('Soubor musí mít příponu .bin.', true);
+    return;
+  }
+  if (file.size === 0) {
+    setFwStatus('Soubor je prázdný.', true);
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append('firmware', file, file.name);
+
+  const xhr = new XMLHttpRequest();
+  xhr.open('POST', '/api/firmware/upload', true);
+
+  fwUploadBtn.disabled = true;
+  fwFile.disabled = true;
+  fwProgressWrap.hidden = false;
+  fwProgress.value = 0;
+  fwProgressPct.textContent = '0 %';
+  setFwStatus('Připravuji upload…', false);
+
+  xhr.upload.addEventListener('progress', (e) => {
+    if (e.lengthComputable) {
+      const pct = Math.round((e.loaded / e.total) * 100);
+      fwProgress.value = pct;
+      fwProgressPct.textContent = pct + ' %';
+      if (pct < 100) {
+        setFwStatus('Nahrávám firmware… ' + pct + ' %', false);
+      } else {
+        setFwStatus('Flashuji firmware, čekej…', false);
+      }
+    }
+  });
+
+  xhr.addEventListener('load', () => {
+    fwUploadBtn.disabled = false;
+    fwFile.disabled = false;
+    let data;
+    try {
+      data = JSON.parse(xhr.responseText);
+    } catch (_) {
+      setFwStatus('Neočekávaná odpověď serveru.', true);
+      return;
+    }
+    if (data.ok) {
+      fwProgress.value = 100;
+      fwProgressPct.textContent = '100 %';
+      setFwStatus(
+        'Firmware nahrán! Zařízení se restartuje – web UI bude chvíli nedostupné.',
+        false
+      );
+    } else {
+      setFwStatus('Chyba: ' + (data.error || 'Neznámá chyba'), true);
+    }
+  });
+
+  xhr.addEventListener('error', () => {
+    fwUploadBtn.disabled = false;
+    fwFile.disabled = false;
+    setFwStatus('Chyba sítě během uploadu.', true);
+  });
+
+  xhr.addEventListener('abort', () => {
+    fwUploadBtn.disabled = false;
+    fwFile.disabled = false;
+    setFwStatus('Upload přerušen.', true);
+  });
+
+  xhr.send(formData);
 });
 
 window.addEventListener('resize', renderMapPoints);

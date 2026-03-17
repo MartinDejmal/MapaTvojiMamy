@@ -40,6 +40,10 @@ void WebConfigServer::registerRoutes() {
   server_.on("/api/restart", HTTP_POST, [this]() { handleRestart(); });
   server_.on("/api/map-state", HTTP_GET, [this]() { handleMapState(); });
 
+  server_.on("/api/firmware/upload", HTTP_POST,
+             [this]() { handleFirmwareUploadFinish(); },
+             [this]() { handleFirmwareUploadChunk(); });
+
   // Captive portal detection endpoints for iOS, Android, Windows
   if (apMode_) {
     // iOS / macOS
@@ -71,7 +75,8 @@ void WebConfigServer::handleStatus() {
   }
 
   const AppStatus status = statusProvider_();
-  StaticJsonDocument<1024> doc;
+  // 1536 bytes accommodates all fields including the new firmware metadata strings.
+  StaticJsonDocument<1536> doc;
   doc["wifiConnected"] = status.wifiConnected;
   doc["apMode"] = status.apMode;
   doc["apSsid"] = status.apSsid;
@@ -90,6 +95,10 @@ void WebConfigServer::handleStatus() {
   doc["unknownCount"] = status.unknownCount;
   doc["activeCount"] = status.activeCount;
   doc["lastParserError"] = status.lastParserError;
+  doc["firmwareVersion"] = status.firmwareVersion;
+  doc["buildDate"] = status.buildDate;
+  doc["buildTime"] = status.buildTime;
+  doc["otaSupported"] = status.otaSupported;
 
   String body;
   serializeJson(doc, body);
@@ -238,4 +247,12 @@ bool WebConfigServer::serveStaticFile(const char* path, const char* contentType)
   server_.streamFile(file, contentType);
   file.close();
   return true;
+}
+
+void WebConfigServer::handleFirmwareUploadChunk() {
+  firmwareUpdateService_.handleUploadChunk(server_);
+}
+
+void WebConfigServer::handleFirmwareUploadFinish() {
+  firmwareUpdateService_.handleUploadFinish(server_);
 }

@@ -8,6 +8,7 @@
 #include "AppConfig.h"
 #include "AppStatus.h"
 #include "DataParser.h"
+#include "FirmwareUpdateService.h"
 #include "MapLayout.h"
 
 class WebConfigServer {
@@ -36,6 +37,8 @@ class WebConfigServer {
   void handleTestFetch();
   void handleRestart();
   void handleMapState();
+  void handleFirmwareUploadChunk();
+  void handleFirmwareUploadFinish();
   void handleRoot();
   void handleAppJs();
   void handleAppCss();
@@ -51,4 +54,5 @@ class WebConfigServer {
   TestFetchRunner testFetchRunner_;
   LedStatesProvider ledStatesProvider_;
   MapLayout mapLayout_;
+  FirmwareUpdateService firmwareUpdateService_;
 };
