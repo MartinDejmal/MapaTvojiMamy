@@ -40,7 +40,7 @@ void FirmwareUpdateService::handleUploadChunk(WebServer& server) {
 
     // Validate magic byte on the first chunk that actually contains data.
     // Empty chunks can occur due to network chunking; defer until data arrives.
-    if (firstChunk_ && upload.bufLen > 0) {
+    if (firstChunk_ && upload.currentSize > 0) {
       firstChunk_ = false;
       if (upload.buf[0] != kEspImageMagic) {
         uploadError_ = "Neplatný firmware image (nesprávný magic byte)";
@@ -51,8 +51,8 @@ void FirmwareUpdateService::handleUploadChunk(WebServer& server) {
       }
     }
 
-    if (upload.bufLen > 0 &&
-        Update.write(upload.buf, upload.bufLen) != upload.bufLen) {
+    if (upload.currentSize > 0 &&
+        Update.write(upload.buf, upload.currentSize) != upload.currentSize) {
       uploadError_ = String("Chyba zápisu firmware: ") + Update.errorString();
       Serial.println("FirmwareUpdate: " + uploadError_);
       Update.abort();
