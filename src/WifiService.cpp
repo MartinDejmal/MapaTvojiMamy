@@ -42,13 +42,22 @@ void WifiService::begin(const WifiConfig& config) {
 
   if (WiFi.softAP(apSsid_.c_str())) {
     apMode_ = true;
+    // Redirect all DNS queries to the AP IP for captive portal
+    dnsServer_.start(53, "*", WiFi.softAPIP());
     Serial.println("AP mode started for WiFi provisioning");
+    Serial.println("DNS server started for captive portal redirect");
     Serial.print("AP SSID: ");
     Serial.println(apSsid_);
     Serial.print("AP IP: ");
     Serial.println(apIp());
   } else {
     Serial.println("AP mode failed to start");
+  }
+}
+
+void WifiService::processDns() {
+  if (apMode_) {
+    dnsServer_.processNextRequest();
   }
 }
 

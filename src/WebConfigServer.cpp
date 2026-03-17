@@ -4,10 +4,14 @@
 #include <LittleFS.h>
 
 void WebConfigServer::begin(
+    bool apMode,
+    const String& apIp,
     StatusProvider statusProvider,
     ConfigJsonProvider configJsonProvider,
     ConfigSaver configSaver,
     TestFetchRunner testFetchRunner) {
+  apMode_ = apMode;
+  apIp_ = apIp;
   statusProvider_ = statusProvider;
   configJsonProvider_ = configJsonProvider;
   configSaver_ = configSaver;
@@ -33,7 +37,23 @@ void WebConfigServer::registerRoutes() {
   server_.on("/api/test-fetch", HTTP_POST, [this]() { handleTestFetch(); });
   server_.on("/api/restart", HTTP_POST, [this]() { handleRestart(); });
 
+  // Captive portal detection endpoints for iOS, Android, Windows
+  if (apMode_) {
+    // iOS / macOS
+    server_.on("/hotspot-detect.html", HTTP_GET, [this]() { handleCaptivePortalRedirect(); });
+    // Android
+    server_.on("/generate_204", HTTP_GET, [this]() { handleCaptivePortalRedirect(); });
+    // Windows 10+
+    server_.on("/connecttest.txt", HTTP_GET, [this]() { handleCaptivePortalRedirect(); });
+    // Windows NCSI
+    server_.on("/ncsi.txt", HTTP_GET, [this]() { handleCaptivePortalRedirect(); });
+  }
+
   server_.onNotFound([this]() {
+    if (apMode_) {
+      handleCaptivePortalRedirect();
+      return;
+    }
     if (serveStaticFile(server_.uri().c_str(), "text/plain")) {
       return;
     }
@@ -128,6 +148,15 @@ void WebConfigServer::handleRestart() {
   server_.send(200, "application/json", "{\"ok\":true,\"message\":\"Restarting\"}");
   delay(300);
   ESP.restart();
+}
+
+void WebConfigServer::handleCaptivePortalRedirect() {
+  // Use the explicit IP URL: DNS has already redirected the browser from
+  // a foreign domain to us, so a relative path would resolve to that foreign
+  // domain and not our AP IP.
+  String url = String("http://") + apIp_ + "/";
+  server_.sendHeader("Location", url);
+  server_.send(302, "text/plain", "");
 }
 
 void WebConfigServer::handleRoot() {
