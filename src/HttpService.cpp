@@ -17,6 +17,7 @@ HttpResult HttpService::getWithStatus(const String& url, String& payload) {
     return {false, 0, "http.begin failed"};
   }
 
+  http.addHeader("Accept-Encoding", "identity");
   const int httpResponseCode = http.GET();
   if (httpResponseCode > 0) {
     payload = http.getString();

@@ -17,8 +17,17 @@ bool DataParser::parse(
   clearStates(outStates, count);
   resetStats(outStats);
 
-  StaticJsonDocument<8192> doc;
-  DeserializationError error = deserializeJson(doc, payload);
+  // Strip UTF-8 BOM (EF BB BF) if present at the beginning of the payload
+  const char* jsonStart = payload.c_str();
+  if (payload.length() >= 3 &&
+      static_cast<uint8_t>(jsonStart[0]) == 0xEF &&
+      static_cast<uint8_t>(jsonStart[1]) == 0xBB &&
+      static_cast<uint8_t>(jsonStart[2]) == 0xBF) {
+    jsonStart += 3;
+  }
+
+  JsonDocument doc;
+  DeserializationError error = deserializeJson(doc, jsonStart);
   if (error) {
     Serial.print("DataParser: JSON parse failed: ");
     Serial.println(error.c_str());
