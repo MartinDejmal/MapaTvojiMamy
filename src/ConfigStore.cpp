@@ -141,7 +141,7 @@ bool ConfigStore::validateAndNormalize(AppConfig& config, String& reason) {
 }
 
 bool ConfigStore::fromJson(const String& json, AppConfig& outConfig, String& reason) {
-  StaticJsonDocument<4096> doc;
+  JsonDocument doc;
   DeserializationError error = deserializeJson(doc, json);
   if (error) {
     reason = String("deserialize failed: ") + error.c_str();
@@ -184,16 +184,16 @@ bool ConfigStore::fromJson(const String& json, AppConfig& outConfig, String& rea
 }
 
 String ConfigStore::toJson(const AppConfig& config) const {
-  StaticJsonDocument<4096> doc;
+  JsonDocument doc;
 
   doc["schemaVersion"] = config.schemaVersion;
 
-  JsonObject wifi = doc.createNestedObject("wifi");
+  JsonObject wifi = doc["wifi"].to<JsonObject>();
   wifi["ssid"] = config.wifi.ssid;
   wifi["password"] = config.wifi.password;
   wifi["hostname"] = config.wifi.hostname;
 
-  JsonObject mapProfile = doc.createNestedObject("mapProfile");
+  JsonObject mapProfile = doc["mapProfile"].to<JsonObject>();
   mapProfile["url"] = config.mapProfile.url;
   mapProfile["parserType"] = config.mapProfile.parserType;
   mapProfile["locationField"] = config.mapProfile.locationField;
@@ -203,7 +203,7 @@ String ConfigStore::toJson(const AppConfig& config) const {
   mapProfile["maxValue"] = config.mapProfile.maxValue;
   mapProfile["refreshIntervalMs"] = config.mapProfile.refreshIntervalMs;
 
-  JsonObject render = doc.createNestedObject("render");
+  JsonObject render = doc["render"].to<JsonObject>();
   render["brightness"] = config.render.brightness;
   render["wheelMin"] = config.render.wheelMin;
   render["wheelMax"] = config.render.wheelMax;

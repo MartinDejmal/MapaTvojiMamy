@@ -75,8 +75,7 @@ void WebConfigServer::handleStatus() {
   }
 
   const AppStatus status = statusProvider_();
-  // 1536 bytes accommodates all fields including the new firmware metadata strings.
-  StaticJsonDocument<1536> doc;
+  JsonDocument doc;
   doc["wifiConnected"] = status.wifiConnected;
   doc["apMode"] = status.apMode;
   doc["apSsid"] = status.apSsid;
@@ -123,7 +122,7 @@ void WebConfigServer::handlePostConfig() {
   const String body = server_.arg("plain");
   SaveConfigResult result = configSaver_(body);
 
-  StaticJsonDocument<512> doc;
+  JsonDocument doc;
   doc["ok"] = result.ok;
   doc["requiresWifiReconnect"] = result.requiresWifiReconnect;
   doc["requiresRestart"] = result.requiresRestart;
@@ -141,7 +140,7 @@ void WebConfigServer::handleTestFetch() {
   }
 
   const TestFetchResult result = testFetchRunner_();
-  StaticJsonDocument<2048> doc;
+  JsonDocument doc;
   doc["ok"] = result.ok;
   doc["httpStatus"] = result.httpStatus;
   doc["parserOk"] = result.parserOk;
@@ -166,13 +165,13 @@ void WebConfigServer::handleMapState() {
   LedState states[kLedCount]{};
   ledStatesProvider_(states, kLedCount);
 
-  DynamicJsonDocument doc(24576);
-  JsonObject image = doc.createNestedObject("image");
+  JsonDocument doc;
+  JsonObject image = doc["image"].to<JsonObject>();
   image["url"] = "/mapa-okresy-cr.jpg";
   image["width"] = MapLayout::MAP_IMAGE_WIDTH;
   image["height"] = MapLayout::MAP_IMAGE_HEIGHT;
 
-  JsonArray points = doc.createNestedArray("points");
+  JsonArray points = doc["points"].to<JsonArray>();
   const MapPoint* mapPoints = mapLayout_.points();
   const size_t pointCount = mapLayout_.count();
   for (size_t i = 0; i < pointCount; ++i) {
@@ -180,7 +179,7 @@ void WebConfigServer::handleMapState() {
     const bool indexValid = point.index < kLedCount;
     const LedState state = indexValid ? states[point.index] : LedState{};
 
-    JsonObject item = points.createNestedObject();
+    JsonObject item = points.add<JsonObject>();
     item["index"] = point.index;
     item["name"] = point.name;
     item["x"] = point.x;

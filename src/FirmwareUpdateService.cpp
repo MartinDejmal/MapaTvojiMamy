@@ -77,7 +77,7 @@ void FirmwareUpdateService::handleUploadChunk(WebServer& server) {
 }
 
 void FirmwareUpdateService::handleUploadFinish(WebServer& server) {
-  StaticJsonDocument<256> doc;
+  JsonDocument doc;
 
   if (!uploadError_.isEmpty()) {
     doc["ok"] = false;
