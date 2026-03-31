@@ -31,6 +31,7 @@ struct RenderConfig {
   uint8_t brightness;
   int wheelMin;
   int wheelMax;
+  String ledOrder;
 };
 
 struct AppConfig {
