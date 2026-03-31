@@ -30,6 +30,7 @@ AppConfig defaultConfig() {
   config.render.brightness = 10;
   config.render.wheelMin = 170;
   config.render.wheelMax = 0;
+  config.render.ledOrder = "TVOJEMAMA";
 
   return config;
 }

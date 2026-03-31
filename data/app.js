@@ -46,6 +46,7 @@ function fillConfigForm(config) {
   configForm.brightness.value = config.render?.brightness ?? '';
   configForm.wheelMin.value = config.render?.wheelMin ?? '';
   configForm.wheelMax.value = config.render?.wheelMax ?? '';
+  configForm.ledOrder.value = config.render?.ledOrder || 'TVOJEMAMA';
 }
 
 function collectConfig() {
@@ -70,6 +71,7 @@ function collectConfig() {
       brightness: Number(configForm.brightness.value),
       wheelMin: Number(configForm.wheelMin.value),
       wheelMax: Number(configForm.wheelMax.value),
+      ledOrder: configForm.ledOrder.value,
     },
   };
 }

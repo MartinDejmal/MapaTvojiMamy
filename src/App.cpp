@@ -243,4 +243,6 @@ void App::printActiveConfig() const {
   Serial.println(config_.render.wheelMin);
   Serial.print("    wheelMax: ");
   Serial.println(config_.render.wheelMax);
+  Serial.print("    ledOrder: ");
+  Serial.println(config_.render.ledOrder);
 }

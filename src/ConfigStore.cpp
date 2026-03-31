@@ -12,6 +12,13 @@ String maskedPassword(const String& value) {
   }
   return "********";
 }
+
+String normalizeLedOrder(const String& value) {
+  String normalized = value;
+  normalized.trim();
+  normalized.toUpperCase();
+  return normalized;
+}
 }  // namespace
 
 bool ConfigStore::begin() {
@@ -104,6 +111,13 @@ bool ConfigStore::validateAndNormalize(AppConfig& config, String& reason) {
     return false;
   }
 
+  const String ledOrder = normalizeLedOrder(config.render.ledOrder);
+  if (ledOrder != "TVOJEMAMA" && ledOrder != "LASKAKIT") {
+    reason = "render.ledOrder must be TVOJEMAMA or LASKAKIT";
+    return false;
+  }
+  config.render.ledOrder = ledOrder;
+
   const String parserTypeRaw = config.mapProfile.parserType;
   ParserType parserType = AppDefaults::parserTypeFromString(parserTypeRaw, ParserType::INDEXED_H1);
   const String parserTypeNormalized = String(AppDefaults::parserTypeToString(parserType));
@@ -179,6 +193,8 @@ bool ConfigStore::fromJson(const String& json, AppConfig& outConfig, String& rea
   outConfig.render.brightness = render["brightness"] | outConfig.render.brightness;
   outConfig.render.wheelMin = render["wheelMin"] | outConfig.render.wheelMin;
   outConfig.render.wheelMax = render["wheelMax"] | outConfig.render.wheelMax;
+  outConfig.render.ledOrder =
+      String((const char*)(render["ledOrder"] | outConfig.render.ledOrder.c_str()));
 
   return validateAndNormalize(outConfig, reason);
 }
@@ -207,6 +223,7 @@ String ConfigStore::toJson(const AppConfig& config) const {
   render["brightness"] = config.render.brightness;
   render["wheelMin"] = config.render.wheelMin;
   render["wheelMax"] = config.render.wheelMax;
+  render["ledOrder"] = config.render.ledOrder;
 
   String json;
   serializeJsonPretty(doc, json);

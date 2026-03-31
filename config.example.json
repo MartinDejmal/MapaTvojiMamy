@@ -18,6 +18,7 @@
   "render": {
     "brightness": 10,
     "wheelMin": 170,
-    "wheelMax": 0
+    "wheelMax": 0,
+    "ledOrder": "TVOJEMAMA"
   }
 }

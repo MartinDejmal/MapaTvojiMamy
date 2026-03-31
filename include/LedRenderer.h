@@ -12,5 +12,6 @@ class LedRenderer {
 
  private:
   RenderConfig renderConfig_{};
+  int mapLogicalToPhysicalIndex(size_t logicalIndex) const;
   uint8_t wheelFromValue(float value, float minValue, float maxValue) const;
 };
