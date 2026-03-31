@@ -38,6 +38,7 @@ void App::begin() {
 
   wifiService_.begin(config_.wifi);
   ledRenderer_.begin(config_.render);
+  ledRenderer_.playStartupAnimation();
 
   webConfigServer_.begin(
       wifiService_.isApMode(),

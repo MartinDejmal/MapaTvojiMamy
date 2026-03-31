@@ -33,6 +33,53 @@ void LedRenderer::begin(const RenderConfig& config) {
   FastLED.clear(true);
 }
 
+void LedRenderer::playStartupAnimation() {
+  constexpr unsigned long kWhiteFadeDurationMs = 3000;
+  constexpr unsigned long kRainbowDurationMs = 3000;
+  constexpr unsigned long kFrameDelayMs = 16;
+  const unsigned long startMs = millis();
+
+  while (true) {
+    const unsigned long now = millis();
+    const unsigned long elapsed = now - startMs;
+    if (elapsed >= kWhiteFadeDurationMs) {
+      break;
+    }
+
+    const float progress = static_cast<float>(elapsed) / static_cast<float>(kWhiteFadeDurationMs);
+    const float litTarget = progress * static_cast<float>(AppDefaults::LED_COUNT);
+
+    for (int i = 0; i < AppDefaults::LED_COUNT; ++i) {
+      leds[i] = (static_cast<float>(i) < litTarget) ? CRGB::White : CRGB::Black;
+    }
+    FastLED.show();
+    delay(kFrameDelayMs);
+  }
+
+  for (int i = 0; i < AppDefaults::LED_COUNT; ++i) {
+    leds[i] = CRGB::White;
+  }
+  FastLED.show();
+
+  const unsigned long rainbowStartMs = millis();
+  while (true) {
+    const unsigned long now = millis();
+    const unsigned long elapsed = now - rainbowStartMs;
+    if (elapsed >= kRainbowDurationMs) {
+      break;
+    }
+
+    const uint8_t phase = static_cast<uint8_t>((elapsed * 255UL) / kRainbowDurationMs);
+    for (int i = 0; i < AppDefaults::LED_COUNT; ++i) {
+      const uint8_t wheelPos =
+          static_cast<uint8_t>(phase + ((i * 256U) / AppDefaults::LED_COUNT));
+      leds[i] = colorFromWheel(wheelPos);
+    }
+    FastLED.show();
+    delay(kFrameDelayMs);
+  }
+}
+
 void LedRenderer::render(const LedState* states, size_t count, const MapProfileConfig& mapConfig) {
   const size_t ledCount = count < static_cast<size_t>(AppDefaults::LED_COUNT)
                               ? count

@@ -7,6 +7,7 @@
 class LedRenderer {
  public:
   void begin(const RenderConfig& config);
+  void playStartupAnimation();
   void render(const LedState* states, size_t count, const MapProfileConfig& mapConfig);
 
  private:
