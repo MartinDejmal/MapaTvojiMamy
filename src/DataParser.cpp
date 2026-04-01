@@ -278,6 +278,12 @@ bool DataParser::parseNamedColorField(
   }
 
   if (parsedCount == 0) {
+    // Empty color payload is valid and means "turn all LEDs off".
+    if (array.size() == 0) {
+      Serial.println("DataParser: NAMED_COLOR_FIELD payload contains no colors, turning all LEDs off");
+      return true;
+    }
+
     Serial.println("DataParser: NAMED_COLOR_FIELD parsed no values");
     if (outStats != nullptr) {
       outStats->error = "NAMED_COLOR_FIELD parsed no values";
@@ -372,6 +378,15 @@ bool DataParser::parseObjectListIdRgb(
   }
 
   if (recognizedCount == 0) {
+    // Empty color payload is valid and means "turn all LEDs off".
+    if (list.size() == 0) {
+      Serial.println("DataParser: OBJECT_LIST_ID_RGB payload contains no colors, turning all LEDs off");
+      if (outStats != nullptr) {
+        outStats->error = "";
+      }
+      return true;
+    }
+
     Serial.println("DataParser: OBJECT_LIST_ID_RGB parsed no values");
     return false;
   }
