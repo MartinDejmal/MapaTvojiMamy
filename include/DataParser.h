@@ -59,6 +59,7 @@ class DataParser {
       ParseStats* outStats);
   bool parseObjectListIdRgb(
       JsonObjectConst rootObject,
+      const String& inputOrder,
       LedState* outStates,
       size_t count,
       ParseStats* outStats) const;
