@@ -177,6 +177,7 @@ Konfigurace se ukládá jako `/config.json` v LittleFS. Po prvním nahrání lze
 | `brightness` | Jas LED diod (0–255, výchozí: `10`) |
 | `wheelMin` | Počáteční pozice na barevném kole pro `minValue` (výchozí: `170` = modrá) |
 | `wheelMax` | Koncová pozice na barevném kole pro `maxValue` (výchozí: `0` = červená) |
+| `ledOrder` | Formát vstupních `id` v parseru `OBJECT_LIST_ID_RGB`: `TVOJEMAMA` (= nativní TMEP ID) nebo `LASKAKIT` (= LaskaKit ID) |
 
 ---
 
@@ -235,7 +236,7 @@ Pojmenované pole, barva LED se čte přímo z `colorField` ve formátu hex (`#R
 
 ### `OBJECT_LIST_ID_RGB`
 
-Root JSON je objekt. Parser očekává pole `seznam`, kde každá položka obsahuje `id` (index LED) a přímé RGB složky `r`, `g`, `b`. Pole `utc_datum` (a jakákoliv další metadata) jsou tolerována a ignorována.
+Root JSON je objekt. Parser očekává pole `seznam`, kde každá položka obsahuje `id` a přímé RGB složky `r`, `g`, `b`. Pole `utc_datum` (a jakákoliv další metadata) jsou tolerována a ignorována. Význam `id` určuje `render.ledOrder`: `TVOJEMAMA` = nativní TMEP ID, `LASKAKIT` = LaskaKit ID přemapované interně na nativní pořadí LED.
 
 ```json
 {

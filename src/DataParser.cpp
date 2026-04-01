@@ -6,6 +6,33 @@ namespace {
 uint8_t parseHexByte(const String& value) {
   return static_cast<uint8_t>(strtoul(value.c_str(), nullptr, 16));
 }
+
+// Mapování TMEP ID (1..77) -> LaskaKit ID (1..72, neosazené pozice jsou -1).
+constexpr int kTmepToLaskaKit[AppDefaults::LED_COUNT] = {
+    25, 20, 17, 11, 16, 10, 7, 9, 4, 1, 5, 2, 3, 6, 12, 8, 13, 19, 22, 30, 28, 35, 39, 32, 18, 26,
+    46, 31, 37, 36, 43, 45, 57, 49, 62, 58, 66, 69, 60, 50, 56, 64, -1, 72, 70, 63, 48, 54, 47, 52,
+    65, 53, 68, 71, 67, 61, 59, 55, 51, 38, -1, 41, -1, 42, 24, 23, 15, 14, 21, 29, 34, 40, 44, 33,
+    -1, -1, 27,
+};
+
+int logicalIndexFromInputId(int inputId, const String& inputOrder) {
+  if (inputId < 1 || inputId > AppDefaults::LED_COUNT) {
+    return -1;
+  }
+
+  if (inputOrder != "LASKAKIT") {
+    return inputId - 1;
+  }
+
+  for (size_t tmepIndex = 0; tmepIndex < AppDefaults::LED_COUNT; ++tmepIndex) {
+    if (kTmepToLaskaKit[tmepIndex] == inputId) {
+      return static_cast<int>(tmepIndex);
+    }
+  }
+
+  // LaskaKit ID existuje v datech, ale na nativní desce mu neodpovídá žádná LED.
+  return -1;
+}
 }  // namespace
 
 bool DataParser::parse(
@@ -88,7 +115,12 @@ bool DataParser::parse(
       }
 
       JsonObjectConst rootObject = doc.as<JsonObjectConst>();
-      return parseObjectListIdRgb(rootObject, outStates, count, outStats);
+      return parseObjectListIdRgb(
+          rootObject,
+          config.render.ledOrder,
+          outStates,
+          count,
+          outStats);
     }
     default:
       Serial.println("DataParser: unsupported parser type");
@@ -296,6 +328,7 @@ bool DataParser::parseNamedColorField(
 
 bool DataParser::parseObjectListIdRgb(
     JsonObjectConst rootObject,
+    const String& inputOrder,
     LedState* outStates,
     size_t count,
     ParseStats* outStats) const {
@@ -326,7 +359,7 @@ bool DataParser::parseObjectListIdRgb(
       continue;
     }
 
-    const int ledIndex = id.as<int>() - 1;
+    const int ledIndex = logicalIndexFromInputId(id.as<int>(), inputOrder);
     if (ledIndex < 0 || static_cast<size_t>(ledIndex) >= count) {
       ++unknownCount;
       lastItemError = "OBJECT_LIST_ID_RGB id out of range";

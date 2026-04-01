@@ -5,15 +5,6 @@
 namespace {
 CRGB leds[AppDefaults::LED_COUNT];
 
-// Mapování TMEP okresů (index 0..76 => TMEP ID 1..77) na fyzické LED pořadí
-// LaskaKit. Hodnota -1 znamená, že pro daný okres není LED k dispozici.
-constexpr int kLaskaKitOrder[AppDefaults::LED_COUNT] = {
-    24, 19, 16, 10, 15, 9, 6, 8, 3, 0, 4, 1, 2, 5, 11, 7, 12, 18, 21, 29, 27, 34, 38, 31, 17, 25,
-    45, 30, 36, 35, 42, 44, 56, 48, 61, 57, 65, 68, 59, 49, 55, 63, -1, 71, 69, 62, 47, 53, 46, 51,
-    64, 52, 67, 70, 66, 60, 58, 54, 50, 37, -1, 40, -1, 41, 23, 22, 14, 13, 20, 28, 33, 39, 43, 32,
-    -1, -1, 26,
-};
-
 float clampf(float value, float minValue, float maxValue) {
   if (value < minValue) return minValue;
   if (value > maxValue) return maxValue;
@@ -123,11 +114,6 @@ int LedRenderer::mapLogicalToPhysicalIndex(size_t logicalIndex) const {
   if (logicalIndex >= static_cast<size_t>(AppDefaults::LED_COUNT)) {
     return -1;
   }
-
-  if (renderConfig_.ledOrder == "LASKAKIT") {
-    return kLaskaKitOrder[logicalIndex];
-  }
-
   return static_cast<int>(logicalIndex);
 }
 
