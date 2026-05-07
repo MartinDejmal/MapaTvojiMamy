@@ -18,8 +18,8 @@ AppConfig defaultConfig() {
   config.wifi.password = "";
   config.wifi.hostname = "cr-mapa";
 
-  config.mapProfile.url = "http://tmep.cz/vystup-json.php?okresy_cr=1";
-  config.mapProfile.parserType = "INDEXED_H1";
+  config.mapProfile.url = "http://tmep.cz/app/export/okresy-srazky-laskakit.json";
+  config.mapProfile.parserType = "OBJECT_LIST_ID_RGB";
   config.mapProfile.locationField = "name";
   config.mapProfile.valueField = "h1";
   config.mapProfile.colorField = "color";
@@ -30,7 +30,7 @@ AppConfig defaultConfig() {
   config.render.brightness = 10;
   config.render.wheelMin = 170;
   config.render.wheelMax = 0;
-  config.render.ledOrder = "TVOJEMAMA";
+  config.render.ledOrder = "LASKAKIT";
 
   return config;
 }

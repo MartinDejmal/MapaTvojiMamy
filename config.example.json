@@ -6,8 +6,8 @@
     "hostname": "cr-mapa"
   },
   "mapProfile": {
-    "url": "http://tmep.cz/vystup-json.php?okresy_cr=1",
-    "parserType": "INDEXED_H1",
+    "url": "http://tmep.cz/app/export/okresy-srazky-laskakit.json",
+    "parserType": "OBJECT_LIST_ID_RGB",
     "locationField": "name",
     "valueField": "h1",
     "colorField": "color",
@@ -19,6 +19,6 @@
     "brightness": 10,
     "wheelMin": 170,
     "wheelMax": 0,
-    "ledOrder": "TVOJEMAMA"
+    "ledOrder": "LASKAKIT"
   }
 }
