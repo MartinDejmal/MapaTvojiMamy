@@ -11,8 +11,8 @@ struct MapPoint {
 
 class MapLayout {
  public:
-  static constexpr int MAP_IMAGE_WIDTH = 1664;
-  static constexpr int MAP_IMAGE_HEIGHT = 925;
+  static constexpr int MAP_IMAGE_WIDTH = 1025;
+  static constexpr int MAP_IMAGE_HEIGHT = 647;
 
   const MapPoint* points() const;
   size_t count() const;
