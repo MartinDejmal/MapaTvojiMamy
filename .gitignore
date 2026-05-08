@@ -6,3 +6,4 @@
 
 # Local configuration file config.json
 /data/config.json
+.DS_Store
