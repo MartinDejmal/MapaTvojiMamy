@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8" />
+  <title>Editor souřadnic mapy</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: monospace;
+      background: #0d1117;
+      color: #c9d1d9;
+      padding: 20px;
+    }
+
+    h1 {
+      font-size: 1.2rem;
+      margin-bottom: 4px;
+      color: #e6edf3;
+    }
+
+    .subtitle {
+      font-size: 0.8rem;
+      color: #8b949e;
+      margin-bottom: 16px;
+    }
+
+    #canvasWrap {
+      position: relative;
+      display: inline-block;
+      border: 1px solid #30363d;
+      cursor: crosshair;
+    }
+
+    #mapCanvas {
+      display: block;
+    }
+
+    #tooltip {
+      position: fixed;
+      background: rgba(11, 16, 32, 0.95);
+      border: 1px solid #30363d;
+      border-radius: 4px;
+      padding: 6px 10px;
+      font-size: 0.75rem;
+      line-height: 1.6;
+      pointer-events: none;
+      z-index: 100;
+      display: none;
+      white-space: nowrap;
+    }
+
+    #tooltip strong { color: #79c0ff; }
+
+    .section {
+      margin-top: 24px;
+    }
+
+    .section h2 {
+      font-size: 0.9rem;
+      color: #8b949e;
+      border-bottom: 1px solid #21262d;
+      padding-bottom: 6px;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    table {
+      border-collapse: collapse;
+      font-size: 0.78rem;
+      width: 100%;
+      max-width: 700px;
+    }
+
+    th {
+      text-align: left;
+      padding: 4px 10px;
+      background: #161b22;
+      color: #8b949e;
+      border: 1px solid #21262d;
+    }
+
+    td {
+      padding: 3px 10px;
+      border: 1px solid #21262d;
+    }
+
+    tr:hover td { background: #161b22; }
+    tr.highlighted td { background: #1f2d3d; }
+
+    td.name { color: #79c0ff; }
+    td.coord { color: #a5d6ff; text-align: right; }
+
+    #cppOutput {
+      width: 100%;
+      max-width: 860px;
+      height: 420px;
+      background: #161b22;
+      border: 1px solid #30363d;
+      color: #a5d6ff;
+      font-family: monospace;
+      font-size: 0.78rem;
+      padding: 12px;
+      resize: vertical;
+      outline: none;
+    }
+
+    button {
+      margin-top: 8px;
+      padding: 6px 16px;
+      background: #21262d;
+      border: 1px solid #30363d;
+      color: #c9d1d9;
+      font-family: monospace;
+      font-size: 0.82rem;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+
+    button:hover { background: #30363d; }
+
+    #copyBtn.copied { color: #3fb950; border-color: #3fb950; }
+
+    .hint {
+      font-size: 0.75rem;
+      color: #8b949e;
+      margin-top: 6px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Editor souřadnic mapy</h1>
+<p class="subtitle">Přetáhni body myší na správné místo. Souřadnice a C++ kód se aktualizují živě.</p>
+
+<div id="canvasWrap">
+  <canvas id="mapCanvas"></canvas>
+  <div id="tooltip"></div>
+</div>
+
+<div class="section">
+  <h2>Souřadnice bodů</h2>
+  <table id="coordTable">
+    <thead>
+      <tr>
+        <th>index</th>
+        <th>name</th>
+        <th>x</th>
+        <th>y</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<div class="section">
+  <h2>Vygenerovaný kód pro MapLayout.cpp</h2>
+  <p class="hint">Zkopíruj celý obsah a nahraď jím pole <code>kMapPoints[]</code> v <code>src/MapLayout.cpp</code>.</p>
+  <textarea id="cppOutput" readonly spellcheck="false"></textarea>
+  <br />
+  <button id="copyBtn">Kopírovat kód</button>
+</div>
+
+<script>
+// ── Data ────────────────────────────────────────────────────────────────────
+
+const ORIG_W = 1025;
+const ORIG_H = 647;
+const IMG_SRC = '../../data/mapa-okresy-cr.jpg';
+
+const points = [
+  {index:  0, name: "benesov",             x: 480, y: 340},
+  {index:  1, name: "beroun",              x: 390, y: 305},
+  {index:  2, name: "blansko",             x: 640, y: 420},
+  {index:  3, name: "breclav",             x: 705, y: 590},
+  {index:  4, name: "brno-mesto",          x: 640, y: 460},
+  {index:  5, name: "brno-venkov",         x: 660, y: 480},
+  {index:  6, name: "bruntal",             x: 790, y: 350},
+  {index:  7, name: "ceska-lipa",          x: 370, y: 145},
+  {index:  8, name: "ceske-budejovice",    x: 340, y: 510},
+  {index:  9, name: "cesky-krumlov",       x: 300, y: 555},
+  {index: 10, name: "cheb",               x:  60, y: 240},
+  {index: 11, name: "chomutov",            x: 210, y: 200},
+  {index: 12, name: "chrudim",             x: 580, y: 280},
+  {index: 13, name: "decin",               x: 270, y: 105},
+  {index: 14, name: "domazlice",           x: 140, y: 350},
+  {index: 15, name: "frydek-mistek",       x: 915, y: 400},
+  {index: 16, name: "havlickuv-brod",      x: 560, y: 350},
+  {index: 17, name: "hodonin",             x: 700, y: 555},
+  {index: 18, name: "hradec-kralove",      x: 600, y: 220},
+  {index: 19, name: "jablonec-nad-nisou",  x: 430, y: 100},
+  {index: 20, name: "jesenik",             x: 760, y: 280},
+  {index: 21, name: "jicin",               x: 530, y: 175},
+  {index: 22, name: "jihlava",             x: 570, y: 410},
+  {index: 23, name: "jindrichuv-hradec",   x: 450, y: 480},
+  {index: 24, name: "karlovy-vary",        x: 130, y: 240},
+  {index: 25, name: "karvina",             x: 940, y: 365},
+  {index: 26, name: "kladno",              x: 380, y: 270},
+  {index: 27, name: "klatovy",             x: 185, y: 425},
+  {index: 28, name: "kolin",               x: 510, y: 270},
+  {index: 29, name: "kromeriz",            x: 775, y: 460},
+  {index: 30, name: "kutna-hora",          x: 510, y: 305},
+  {index: 31, name: "liberec",             x: 415, y: 100},
+  {index: 32, name: "litomerice",          x: 320, y: 170},
+  {index: 33, name: "louny",               x: 270, y: 215},
+  {index: 34, name: "melnik",              x: 375, y: 220},
+  {index: 35, name: "mlada-boleslav",      x: 440, y: 175},
+  {index: 36, name: "most",                x: 240, y: 195},
+  {index: 37, name: "nachod",              x: 660, y: 195},
+  {index: 38, name: "novy-jicin",          x: 845, y: 380},
+  {index: 39, name: "nymburk",             x: 470, y: 240},
+  {index: 40, name: "olomouc",             x: 745, y: 385},
+  {index: 41, name: "opava",               x: 855, y: 350},
+  {index: 42, name: "ostrava-mesto",       x: 885, y: 355},
+  {index: 43, name: "pardubice",           x: 560, y: 250},
+  {index: 44, name: "pelhrimov",           x: 510, y: 380},
+  {index: 45, name: "pisek",               x: 310, y: 440},
+  {index: 46, name: "plzen-mesto",         x: 215, y: 325},
+  {index: 47, name: "plzen-jih",           x: 220, y: 360},
+  {index: 48, name: "plzen-sever",         x: 200, y: 295},
+  {index: 49, name: "prachatice",          x: 250, y: 510},
+  {index: 50, name: "praha-vychod",        x: 460, y: 275},
+  {index: 51, name: "praha-zapad",         x: 420, y: 300},
+  {index: 52, name: "prerov",              x: 790, y: 425},
+  {index: 53, name: "pribram",             x: 370, y: 350},
+  {index: 54, name: "prostejov",           x: 745, y: 415},
+  {index: 55, name: "rakovnik",            x: 310, y: 270},
+  {index: 56, name: "rokycany",            x: 260, y: 335},
+  {index: 57, name: "rychnov-nad-kneznou", x: 650, y: 230},
+  {index: 58, name: "semily",              x: 470, y: 130},
+  {index: 59, name: "sokolov",             x:  75, y: 250},
+  {index: 60, name: "strakonice",          x: 270, y: 460},
+  {index: 61, name: "sumperk",             x: 740, y: 320},
+  {index: 62, name: "svitavy",             x: 660, y: 320},
+  {index: 63, name: "tabor",               x: 430, y: 415},
+  {index: 64, name: "tachov",              x: 130, y: 315},
+  {index: 65, name: "teplice",             x: 255, y: 165},
+  {index: 66, name: "trebic",              x: 610, y: 450},
+  {index: 67, name: "trutnov",             x: 620, y: 165},
+  {index: 68, name: "uherske-hradiste",    x: 790, y: 510},
+  {index: 69, name: "usti-nad-labem",      x: 295, y: 165},
+  {index: 70, name: "usti-nad-orlici",     x: 655, y: 280},
+  {index: 71, name: "vsetin",              x: 855, y: 445},
+  {index: 72, name: "vyskov",              x: 700, y: 440},
+  {index: 73, name: "zlin",                x: 820, y: 470},
+  {index: 74, name: "znojmo",              x: 615, y: 540},
+  {index: 75, name: "zdar-nad-sazavou",    x: 615, y: 380},
+  {index: 76, name: "prague",              x: 440, y: 285},
+];
+
+// ── Canvas setup ─────────────────────────────────────────────────────────────
+
+const canvas = document.getElementById('mapCanvas');
+const ctx = canvas.getContext('2d');
+const tooltip = document.getElementById('tooltip');
+
+const MAX_CANVAS_W = Math.min(window.innerWidth - 48, 1025);
+const SCALE = MAX_CANVAS_W / ORIG_W;
+canvas.width  = Math.round(ORIG_W * SCALE);
+canvas.height = Math.round(ORIG_H * SCALE);
+
+const DOT_R = 6;          // display radius
+const HIT_R = DOT_R + 4;  // hit-test radius
+
+const mapImg = new Image();
+mapImg.src = IMG_SRC;
+mapImg.onload = () => {
+  redraw();
+  buildTable();
+  buildCpp();
+};
+
+// ── Coordinate helpers ────────────────────────────────────────────────────────
+
+function toCanvas(p)  { return { cx: p.x * SCALE, cy: p.y * SCALE }; }
+function toOrig(cx, cy) { return { x: Math.round(cx / SCALE), y: Math.round(cy / SCALE) }; }
+
+// ── Drawing ──────────────────────────────────────────────────────────────────
+
+function redraw(dragIdx) {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  if (mapImg.complete && mapImg.naturalWidth) {
+    ctx.drawImage(mapImg, 0, 0, canvas.width, canvas.height);
+  } else {
+    ctx.fillStyle = '#1a2030';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#8b949e';
+    ctx.font = '14px monospace';
+    ctx.fillText('Načítám mapu…', 20, 30);
+  }
+
+  points.forEach((p, i) => {
+    const { cx, cy } = toCanvas(p);
+    const isDragged = i === dragIdx;
+
+    // shadow
+    ctx.shadowColor = 'rgba(0,0,0,0.7)';
+    ctx.shadowBlur = 4;
+
+    // fill
+    ctx.beginPath();
+    ctx.arc(cx, cy, isDragged ? DOT_R + 2 : DOT_R, 0, Math.PI * 2);
+    ctx.fillStyle = isDragged ? '#f78166' : '#58a6ff';
+    ctx.fill();
+
+    // border
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = isDragged ? '#ffa198' : '#ffffff';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  });
+
+  ctx.shadowBlur = 0;
+}
+
+// ── Hit test ─────────────────────────────────────────────────────────────────
+
+function hitTest(cx, cy) {
+  for (let i = points.length - 1; i >= 0; i--) {
+    const { cx: px, cy: py } = toCanvas(points[i]);
+    const dx = cx - px, dy = cy - py;
+    if (Math.sqrt(dx * dx + dy * dy) <= HIT_R) return i;
+  }
+  return -1;
+}
+
+// ── Drag ─────────────────────────────────────────────────────────────────────
+
+let dragIdx = -1;
+let dragOffX = 0, dragOffY = 0;
+
+canvas.addEventListener('mousedown', (e) => {
+  const r = canvas.getBoundingClientRect();
+  const cx = e.clientX - r.left;
+  const cy = e.clientY - r.top;
+  const idx = hitTest(cx, cy);
+  if (idx === -1) return;
+  dragIdx = idx;
+  const { cx: px, cy: py } = toCanvas(points[idx]);
+  dragOffX = cx - px;
+  dragOffY = cy - py;
+  canvas.style.cursor = 'grabbing';
+  e.preventDefault();
+});
+
+window.addEventListener('mousemove', (e) => {
+  const r = canvas.getBoundingClientRect();
+  const cx = e.clientX - r.left;
+  const cy = e.clientY - r.top;
+
+  if (dragIdx !== -1) {
+    let newCx = cx - dragOffX;
+    let newCy = cy - dragOffY;
+    newCx = Math.max(0, Math.min(canvas.width,  newCx));
+    newCy = Math.max(0, Math.min(canvas.height, newCy));
+    const { x, y } = toOrig(newCx, newCy);
+    points[dragIdx].x = x;
+    points[dragIdx].y = y;
+    redraw(dragIdx);
+    updateTableRow(dragIdx);
+    buildCpp();
+    showTooltip(e, points[dragIdx]);
+    return;
+  }
+
+  // hover
+  const hov = hitTest(cx, cy);
+  canvas.style.cursor = hov !== -1 ? 'grab' : 'crosshair';
+  if (hov !== -1) {
+    showTooltip(e, points[hov]);
+  } else {
+    hideTooltip();
+  }
+});
+
+window.addEventListener('mouseup', () => {
+  if (dragIdx !== -1) {
+    redraw();
+    dragIdx = -1;
+    canvas.style.cursor = 'crosshair';
+  }
+});
+
+canvas.addEventListener('mouseleave', hideTooltip);
+
+// ── Tooltip ───────────────────────────────────────────────────────────────────
+
+function showTooltip(e, p) {
+  tooltip.innerHTML = `<strong>${p.name}</strong><br/>index: ${p.index}<br/>x: ${p.x}<br/>y: ${p.y}`;
+  tooltip.style.display = 'block';
+  positionTooltip(e);
+}
+
+function positionTooltip(e) {
+  const tw = tooltip.offsetWidth;
+  const th = tooltip.offsetHeight;
+  let left = e.clientX + 14;
+  let top  = e.clientY + 14;
+  if (left + tw > window.innerWidth  - 8) left = e.clientX - tw - 14;
+  if (top  + th > window.innerHeight - 8) top  = e.clientY - th - 14;
+  tooltip.style.left = left + 'px';
+  tooltip.style.top  = top  + 'px';
+}
+
+function hideTooltip() {
+  tooltip.style.display = 'none';
+}
+
+// ── Table ─────────────────────────────────────────────────────────────────────
+
+const tbody = document.querySelector('#coordTable tbody');
+
+function buildTable() {
+  tbody.innerHTML = '';
+  points.forEach((p, i) => {
+    const tr = document.createElement('tr');
+    tr.id = `row-${i}`;
+    tr.innerHTML = `
+      <td>${p.index}</td>
+      <td class="name">${p.name}</td>
+      <td class="coord" id="tx-${i}">${p.x}</td>
+      <td class="coord" id="ty-${i}">${p.y}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function updateTableRow(i) {
+  const p = points[i];
+  const tx = document.getElementById(`tx-${i}`);
+  const ty = document.getElementById(`ty-${i}`);
+  if (tx) tx.textContent = p.x;
+  if (ty) ty.textContent = p.y;
+  const row = document.getElementById(`row-${i}`);
+  if (row) {
+    row.classList.add('highlighted');
+    clearTimeout(row._hl);
+    row._hl = setTimeout(() => row.classList.remove('highlighted'), 800);
+  }
+}
+
+// ── C++ code generator ────────────────────────────────────────────────────────
+
+const cppOut = document.getElementById('cppOutput');
+
+function buildCpp() {
+  const maxNameLen = Math.max(...points.map(p => p.name.length));
+  const maxX = Math.max(...points.map(p => String(p.x).length));
+  const maxY = Math.max(...points.map(p => String(p.y).length));
+
+  const rows = points.map(p => {
+    const idx  = String(p.index).padStart(2);
+    const name = `"${p.name}"`.padEnd(maxNameLen + 3);
+    const x    = String(p.x).padStart(maxX);
+    const y    = String(p.y).padStart(maxY);
+    return `    {${idx}, ${name} ${x}, ${y}},`;
+  });
+
+  cppOut.value =
+    'const MapPoint kMapPoints[] = {\n' +
+    rows.join('\n') +
+    '\n};';
+}
+
+// ── Copy button ───────────────────────────────────────────────────────────────
+
+document.getElementById('copyBtn').addEventListener('click', () => {
+  navigator.clipboard.writeText(cppOut.value).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = 'Zkopírováno!';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = 'Kopírovat kód';
+      btn.classList.remove('copied');
+    }, 1500);
+  });
+});
+</script>
+
+</body>
+</html>
